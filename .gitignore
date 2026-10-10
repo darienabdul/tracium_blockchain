@@ -187,3 +187,4 @@ vite.config.*.timestamp-*
 .vs/tracium_blockchain/v17/.suo
 .vs/tracium_blockchain/v17/.wsuo
 .vs/tracium_blockchain/v17/DocumentLayout.json
+opencode.json
