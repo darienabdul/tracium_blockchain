@@ -1,0 +1,586 @@
+---
+const logoPath = "/logos/logo-background-black-tracium.png";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content="#23103e" />
+    <meta
+      name="description"
+      content="Inicia sesión en Tracium, la plataforma de trazabilidad de mantenimiento aeronáutico."
+    />
+    <title>Iniciar sesión | Tracium</title>
+  </head>
+  <body>
+    <main class="login-layout">
+      <section class="brand-panel" aria-label="Acerca de Tracium">
+        <div class="brand-content">
+          <img class="brand-logo" src={logoPath} alt="Tracium — Track. Trace. Trust." />
+          <div class="brand-message">
+            <p class="eyebrow">Trazabilidad aeronáutica</p>
+            <h1>Confianza en cada registro.</h1>
+            <p class="brand-description">
+              Información clara y verificable para acompañar cada intervención de mantenimiento.
+            </p>
+          </div>
+          <p class="brand-footer">TRACIUM <span>·</span> TRACK. TRACE. TRUST.</p>
+        </div>
+      </section>
+
+      <section class="form-panel" aria-labelledby="login-title">
+        <div class="login-card">
+          <div class="mobile-brand">
+            <img class="mobile-logo" src={logoPath} alt="Tracium" />
+          </div>
+
+          <p class="eyebrow form-eyebrow">Acceso seguro</p>
+          <h2 id="login-title">Iniciar sesión</h2>
+          <p class="form-intro">Ingresa tus datos para continuar.</p>
+
+          <form id="login-form" novalidate>
+            <div class="field">
+              <label for="email">Correo electrónico</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                inputmode="email"
+                placeholder="nombre@empresa.com"
+                required
+                aria-describedby="email-error"
+                aria-invalid="false"
+              />
+              <p class="field-error" id="email-error" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+              <label for="password">Contraseña</label>
+              <div class="password-input">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="Ingresa tu contraseña"
+                  minlength="1"
+                  required
+                  aria-describedby="password-error"
+                  aria-invalid="false"
+                />
+                <button
+                  class="password-toggle"
+                  id="password-toggle"
+                  type="button"
+                  aria-label="Mostrar contraseña"
+                  aria-controls="password"
+                  aria-pressed="false"
+                >
+                  <svg class="eye-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  <svg class="eye-icon is-hidden" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                    <path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a14.8 14.8 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7a10.5 10.5 0 0 0 4.1-.8" />
+                  </svg>
+                </button>
+              </div>
+              <p class="field-error" id="password-error" aria-live="polite"></p>
+            </div>
+
+            <button type="submit">Iniciar sesión <span aria-hidden="true">→</span></button>
+            <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+          </form>
+
+          <p class="auth-note">Acceso de demostración para el blueprint.</p>
+        </div>
+        <p class="copyright">© {new Date().getFullYear()} Tracium</p>
+      </section>
+    </main>
+  </body>
+</html>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>("#login-form");
+  const emailInput = document.querySelector<HTMLInputElement>("#email");
+  const passwordInput = document.querySelector<HTMLInputElement>("#password");
+  const passwordToggle = document.querySelector<HTMLButtonElement>("#password-toggle");
+  const emailError = document.querySelector<HTMLParagraphElement>("#email-error");
+  const passwordError = document.querySelector<HTMLParagraphElement>("#password-error");
+  const formStatus = document.querySelector<HTMLParagraphElement>("#form-status");
+
+  if (
+    !form ||
+    !emailInput ||
+    !passwordInput ||
+    !passwordToggle ||
+    !emailError ||
+    !passwordError ||
+    !formStatus
+  ) {
+    throw new Error("No se pudieron inicializar los campos del formulario de inicio de sesión.");
+  }
+
+  let submitted = false;
+
+  const demoUsers = [
+    { email: "demo@tracium.pro", password: "Admin123*" },
+    { email: "demo2@tracium.pro", password: "User456!" },
+  ];
+
+  if (sessionStorage.getItem("tracium-demo-user")) {
+    window.location.replace("/dashboard/");
+  }
+
+  passwordToggle.addEventListener("click", () => {
+    const isVisible = passwordInput.type === "text";
+    passwordInput.type = isVisible ? "password" : "text";
+    passwordToggle.setAttribute("aria-label", isVisible ? "Mostrar contraseña" : "Ocultar contraseña");
+    passwordToggle.setAttribute("aria-pressed", String(!isVisible));
+    passwordToggle.querySelectorAll("svg").forEach((icon, index) => {
+      icon.classList.toggle("is-hidden", index === (isVisible ? 0 : 1));
+    });
+  });
+
+  function validateField(input: HTMLInputElement, errorElement: HTMLParagraphElement): boolean {
+    let message = "";
+
+    if (input.validity.valueMissing) {
+      message = input.type === "email"
+        ? "Ingresa tu correo electrónico."
+        : "Ingresa tu contraseña.";
+    } else if (input.type === "email" && input.validity.typeMismatch) {
+      message = "Ingresa un correo electrónico válido.";
+    }
+
+    errorElement.textContent = message;
+    input.setAttribute("aria-invalid", String(message.length > 0));
+    return message.length === 0;
+  }
+
+  const fields = [
+    { input: emailInput, error: emailError },
+    { input: passwordInput, error: passwordError },
+  ];
+
+  for (const field of fields) {
+    field.input.addEventListener("input", () => {
+      if (submitted || field.input.dataset.touched === "true") {
+        validateField(field.input, field.error);
+      }
+      formStatus.textContent = "";
+    });
+
+    field.input.addEventListener("blur", () => {
+      field.input.dataset.touched = "true";
+      validateField(field.input, field.error);
+    });
+  }
+
+  form.addEventListener("submit", (event: SubmitEvent) => {
+    event.preventDefault();
+    submitted = true;
+
+    const emailIsValid = validateField(emailInput, emailError);
+    const passwordIsValid = validateField(passwordInput, passwordError);
+
+    if (!emailIsValid || !passwordIsValid) {
+      formStatus.textContent = "";
+      (emailIsValid ? passwordInput : emailInput).focus();
+      return;
+    }
+
+    const email = emailInput.value.trim().toLowerCase();
+    const user = demoUsers.find(
+      (demoUser) => demoUser.email === email && demoUser.password === passwordInput.value,
+    );
+
+    if (!user) {
+      formStatus.textContent = "El correo o la contraseña no son correctos.";
+      return;
+    }
+
+    sessionStorage.setItem("tracium-demo-user", user.email);
+    window.location.assign("/dashboard/");
+  });
+</script>
+
+<style>
+  :global(*) {
+    box-sizing: border-box;
+  }
+
+  :global(body) {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    color: #211b2e;
+    background: #f5f3f8;
+    font-family:
+      Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  :global(button),
+  :global(input) {
+    font: inherit;
+  }
+
+  .login-layout {
+    display: grid;
+    min-height: 100vh;
+    grid-template-columns: minmax(360px, 0.92fr) minmax(460px, 1.08fr);
+  }
+
+  .brand-panel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    padding: 64px clamp(40px, 7vw, 112px);
+    color: white;
+    background:
+      radial-gradient(ellipse at 10% 90%, rgb(178 73 241 / 24%), transparent 42%),
+      linear-gradient(145deg, #23103e 0%, #2e2d4f 64%, #351070 100%);
+  }
+
+  .brand-panel::after {
+    position: absolute;
+    right: -190px;
+    bottom: -240px;
+    width: 500px;
+    height: 500px;
+    border: 1px solid rgb(255 255 255 / 9%);
+    border-radius: 50%;
+    content: "";
+    box-shadow: 0 0 0 48px rgb(255 255 255 / 3%), 0 0 0 96px rgb(255 255 255 / 2%);
+  }
+
+  .brand-content {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 460px);
+    margin: 0 auto;
+  }
+
+  .brand-logo {
+    display: block;
+    width: min(100%, 292px);
+    height: auto;
+    margin-bottom: clamp(100px, 19vh, 190px);
+  }
+
+  .eyebrow {
+    margin: 0 0 18px;
+    color: #b249f1;
+    font-size: 0.75rem;
+    font-weight: 750;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .brand-message .eyebrow {
+    color: #d6a3ff;
+  }
+
+  .brand-message h1 {
+    max-width: 430px;
+    margin: 0;
+    font-size: clamp(2.55rem, 4.8vw, 4.15rem);
+    font-weight: 650;
+    letter-spacing: -0.055em;
+    line-height: 1.05;
+  }
+
+  .brand-description {
+    max-width: 385px;
+    margin: 24px 0 0;
+    color: #d5cce2;
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  .brand-footer {
+    margin: clamp(72px, 13vh, 130px) 0 0;
+    color: #b8adc8;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+
+  .brand-footer span {
+    padding: 0 7px;
+    color: #fb811e;
+  }
+
+  .form-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 32px 28px;
+    background:
+      radial-gradient(ellipse at 95% 5%, rgb(178 73 241 / 7%), transparent 36%),
+      #fff;
+  }
+
+  .login-card {
+    width: min(100%, 410px);
+    margin: auto 0;
+  }
+
+  .mobile-brand {
+    display: none;
+  }
+
+  .form-eyebrow {
+    margin-bottom: 13px;
+  }
+
+  .login-card h2 {
+    margin: 0;
+    color: #23103e;
+    font-size: clamp(2rem, 3vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+  }
+
+  .form-intro {
+    margin: 12px 0 38px;
+    color: #6f687a;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .field {
+    margin-bottom: 23px;
+  }
+
+  .field label {
+    display: block;
+    margin-bottom: 9px;
+    color: #302a3c;
+    font-size: 0.9rem;
+    font-weight: 650;
+  }
+
+  .field input {
+    width: 100%;
+    min-height: 54px;
+    padding: 0 16px;
+    border: 1px solid #d9d4e1;
+    border-radius: 9px;
+    outline: none;
+    color: #211b2e;
+    background: white;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+
+  .field input::placeholder {
+    color: #a39cab;
+  }
+
+  .field input:hover {
+    border-color: #a79aae;
+  }
+
+  .field input:focus {
+    border-color: #7902ff;
+    box-shadow: 0 0 0 3px rgb(121 2 255 / 12%);
+  }
+
+  .field input[aria-invalid="true"] {
+    border-color: #d93445;
+  }
+
+  .field input[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 3px rgb(217 52 69 / 12%);
+  }
+
+  .field-error {
+    min-height: 0;
+    margin: 0;
+    color: #bd2637;
+    font-size: 0.8rem;
+  }
+
+  .field-error:not(:empty) {
+    margin-top: 7px;
+  }
+
+  form button[type="submit"] {
+    display: flex;
+    width: 100%;
+    min-height: 54px;
+    align-items: center;
+    justify-content: center;
+    gap: 11px;
+    margin-top: 8px;
+    border: 0;
+    border-radius: 9px;
+    color: white;
+    background: linear-gradient(105deg, #7902ff 0%, #b249f1 100%);
+    cursor: pointer;
+    font-size: 0.96rem;
+    font-weight: 700;
+    box-shadow: 0 8px 18px rgb(121 2 255 / 19%);
+    transition: box-shadow 140ms ease, transform 140ms ease;
+  }
+
+  form button[type="submit"]:hover {
+    box-shadow: 0 10px 24px rgb(121 2 255 / 28%);
+    transform: translateY(-1px);
+  }
+
+  form button[type="submit"]:focus-visible,
+  .password-toggle:focus-visible {
+    outline: 3px solid #2e2d4f;
+    outline-offset: 3px;
+  }
+
+  form button[type="submit"] span {
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+
+  .password-input {
+    position: relative;
+  }
+
+  .password-input input {
+    padding-right: 52px;
+  }
+
+  .password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    color: #71687e;
+    background: transparent;
+    cursor: pointer;
+    transform: translateY(-50%);
+  }
+
+  .password-toggle:hover {
+    color: #7902ff;
+    background: #f4ebff;
+  }
+
+  .password-toggle:focus-visible {
+    outline-offset: 0;
+  }
+
+  .eye-icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+  }
+
+  .eye-icon.is-hidden {
+    display: none;
+  }
+
+  .form-status {
+    min-height: 0;
+    margin: 0;
+    color: #77511f;
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .form-status:not(:empty) {
+    margin-top: 15px;
+  }
+
+  .auth-note {
+    margin: 28px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid #eeeaf2;
+    color: #827b8c;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    text-align: center;
+  }
+
+  .copyright {
+    margin: 28px 0 0;
+    color: #a39cab;
+    font-size: 0.75rem;
+  }
+
+  @media (max-width: 850px) {
+    .login-layout {
+      grid-template-columns: minmax(260px, 0.8fr) minmax(390px, 1.2fr);
+    }
+
+    .brand-panel {
+      padding: 48px 32px;
+    }
+
+    .brand-logo {
+      margin-bottom: 100px;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .login-layout {
+      display: block;
+      min-height: 100vh;
+      background: white;
+    }
+
+    .brand-panel {
+      display: none;
+    }
+
+    .form-panel {
+      min-height: 100vh;
+      padding: 32px 24px 22px;
+    }
+
+    .mobile-brand {
+      display: block;
+      margin-bottom: 56px;
+    }
+
+    .mobile-logo {
+      display: block;
+      width: 174px;
+      height: auto;
+    }
+
+    .login-card {
+      margin: auto 0;
+    }
+
+    .form-intro {
+      margin-bottom: 32px;
+    }
+
+    .copyright {
+      margin-top: 36px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>

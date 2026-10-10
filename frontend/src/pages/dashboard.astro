@@ -1,0 +1,474 @@
+---
+const logoPath = "/logos/logo-background-black-tracium.png";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content="#23103e" />
+    <meta
+      name="description"
+      content="Dashboard de Tracium, plataforma de trazabilidad de mantenimiento aeronáutico."
+    />
+    <title>Dashboard | Tracium</title>
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <a class="brand" href="/dashboard/" aria-label="Tracium, inicio">
+          <img src={logoPath} alt="Tracium" />
+        </a>
+
+        <p class="nav-heading">ESPACIO DE TRABAJO</p>
+        <nav aria-label="Menú principal">
+          <a class="nav-item active" href="/dashboard/" aria-current="page">
+            <span class="nav-icon" aria-hidden="true">⌂</span>
+            Dashboard
+          </a>
+          <a class="nav-item" href="/interventions/">
+            <span class="nav-icon" aria-hidden="true">▤</span>
+            Intervenciones
+          </a>
+          <span class="nav-item disabled" aria-disabled="true">
+            <span class="nav-icon" aria-hidden="true">✓</span>
+            Inspecciones
+          </span>
+          <span class="nav-item disabled" aria-disabled="true">
+            <span class="nav-icon" aria-hidden="true">◷</span>
+            Auditoría
+          </span>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="status-dot" aria-hidden="true"></span>
+          Entorno de demostración
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div class="breadcrumb"><span>Workspace</span><span aria-hidden="true">/</span>Dashboard</div>
+          <div class="account">
+            <span class="account-avatar" aria-hidden="true">T</span>
+            <span class="account-email" id="account-email">Cuenta demo</span>
+            <button class="logout-button" id="logout-button" type="button">Cerrar sesión</button>
+          </div>
+        </header>
+
+        <section class="dashboard-content" aria-labelledby="dashboard-title">
+          <p class="eyebrow">ESPACIO DE TRABAJO</p>
+          <h1 id="dashboard-title">Dashboard</h1>
+          <p class="intro">Bienvenido a Tracium. Desde aquí podrás dar seguimiento a la operación.</p>
+
+          <div class="empty-state">
+            <div class="empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 64 64" fill="none">
+                <rect x="8" y="8" width="48" height="48" rx="14" />
+                <path d="M20 25h24M20 32h17M20 39h12" />
+                <circle cx="44" cy="42" r="7" />
+                <path d="m49 47 4 4" />
+              </svg>
+            </div>
+            <h2>Tu espacio de trabajo está listo</h2>
+            <p>
+              Cuando el flujo operativo esté conectado, aquí encontrarás el resumen de tus
+              intervenciones, inspecciones y actividad reciente.
+            </p>
+            <span class="empty-badge"><span aria-hidden="true"></span> Sin actividad por ahora</span>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+
+<script>
+  const sessionKey = "tracium-demo-user";
+  const emailLabel = document.querySelector<HTMLSpanElement>("#account-email");
+  const logoutButton = document.querySelector<HTMLButtonElement>("#logout-button");
+  const email = sessionStorage.getItem(sessionKey);
+
+  if (!email) {
+    window.location.replace("/");
+  } else if (emailLabel) {
+    emailLabel.textContent = email;
+  }
+
+  if (!logoutButton) {
+    throw new Error("No se pudo inicializar el botón para cerrar sesión.");
+  }
+
+  logoutButton.addEventListener("click", () => {
+    sessionStorage.removeItem(sessionKey);
+    window.location.replace("/");
+  });
+</script>
+
+<style>
+  :global(*) {
+    box-sizing: border-box;
+  }
+
+  :global(body) {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    color: #211b2e;
+    background: #f6f5f8;
+    font-family:
+      Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .app-layout {
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 1;
+    display: flex;
+    width: 254px;
+    flex-direction: column;
+    padding: 29px 17px 20px;
+    border-right: 1px solid #49365c;
+    background: linear-gradient(180deg, #2e2d4f 0%, #23103e 58%, #351070 100%);
+  }
+
+  .brand {
+    display: block;
+    width: 184px;
+    margin: 2px 0 49px 8px;
+  }
+
+  .brand img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .nav-heading,
+  .eyebrow {
+    color: #d1c5df;
+    font-size: 0.68rem;
+    font-weight: 750;
+    letter-spacing: 0.13em;
+  }
+
+  .nav-heading {
+    margin: 0 11px 12px;
+  }
+
+  nav {
+    display: grid;
+    gap: 5px;
+  }
+
+  .nav-item {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 12px;
+    padding: 0 11px;
+    border-radius: 8px;
+    color: #eee8f5;
+    font-size: 0.87rem;
+    font-weight: 550;
+    text-decoration: none;
+  }
+
+  .nav-item.active {
+    border-left: 3px solid #b249f1;
+    color: #fff;
+    background: rgb(178 73 241 / 19%);
+    font-weight: 700;
+  }
+
+  .nav-item.disabled {
+    color: #c1b8ce;
+    cursor: default;
+  }
+
+  .nav-icon {
+    display: grid;
+    width: 21px;
+    place-items: center;
+    color: inherit;
+    font-size: 1.12rem;
+  }
+
+  .coming-soon {
+    margin-left: auto;
+    color: #c1b8ce;
+    font-size: 0.62rem;
+  }
+
+  .sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: auto;
+    padding: 15px 8px 2px;
+    border-top: 1px solid rgb(255 255 255 / 18%);
+    color: #ded5e8;
+    font-size: 0.73rem;
+  }
+
+  .status-dot,
+  .empty-badge span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #05b179;
+  }
+
+  .main-area {
+    min-height: 100vh;
+    margin-left: 254px;
+  }
+
+  .topbar {
+    display: flex;
+    min-height: 72px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 clamp(22px, 4vw, 56px);
+    border-bottom: 1px solid #ece9f0;
+    background: rgb(255 255 255 / 86%);
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    color: #352e3f;
+    font-size: 0.82rem;
+    font-weight: 650;
+  }
+
+  .breadcrumb span:first-child {
+    color: #898191;
+    font-weight: 450;
+  }
+
+  .breadcrumb span:nth-child(2) {
+    color: #c5becb;
+  }
+
+  .account {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .account-avatar {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: linear-gradient(140deg, #b249f1, #7902ff);
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .account-email {
+    color: #4c4457;
+    font-size: 0.8rem;
+  }
+
+  .logout-button {
+    margin-left: 7px;
+    padding: 8px 11px;
+    border: 1px solid #e8e3ec;
+    border-radius: 7px;
+    color: #62596d;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+
+  .logout-button:hover {
+    border-color: #b249f1;
+    color: #7902ff;
+  }
+
+  .logout-button:focus-visible,
+  .brand:focus-visible,
+  .nav-item:focus-visible {
+    outline: 3px solid rgb(121 2 255 / 30%);
+    outline-offset: 3px;
+  }
+
+  .dashboard-content {
+    width: min(100%, 1050px);
+    margin: 0 auto;
+    padding: clamp(38px, 6vh, 65px) clamp(22px, 4vw, 56px);
+  }
+
+  .eyebrow {
+    margin: 0 0 11px;
+    color: #7902ff;
+  }
+
+  h1 {
+    margin: 0;
+    color: #23103e;
+    font-size: clamp(1.9rem, 3vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+  }
+
+  .intro {
+    margin: 12px 0 36px;
+    color: #797182;
+    font-size: 0.94rem;
+    line-height: 1.6;
+  }
+
+  .empty-state {
+    display: flex;
+    min-height: 330px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    border: 1px dashed #dcd5e4;
+    border-radius: 13px;
+    background: rgb(255 255 255 / 78%);
+    text-align: center;
+  }
+
+  .empty-icon {
+    display: grid;
+    width: 64px;
+    height: 64px;
+    place-items: center;
+    margin-bottom: 21px;
+    border-radius: 18px;
+    background: #f4ebff;
+  }
+
+  .empty-icon svg {
+    width: 40px;
+    stroke: #7902ff;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+  }
+
+  .empty-icon rect {
+    stroke: #c99df4;
+    stroke-width: 1.5;
+  }
+
+  .empty-state h2 {
+    margin: 0;
+    color: #30263c;
+    font-size: 1.08rem;
+    font-weight: 680;
+  }
+
+  .empty-state > p {
+    max-width: 455px;
+    margin: 10px 0 19px;
+    color: #827b8c;
+    font-size: 0.86rem;
+    line-height: 1.65;
+  }
+
+  .empty-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 1px solid #e9e5ee;
+    border-radius: 20px;
+    color: #726a7c;
+    background: #fff;
+    font-size: 0.72rem;
+  }
+
+  .empty-badge span {
+    width: 7px;
+    height: 7px;
+    background: #aaa4b0;
+  }
+
+  @media (max-width: 760px) {
+    .sidebar {
+      inset: auto 0 0;
+      width: auto;
+      height: 70px;
+      flex-direction: row;
+      align-items: center;
+      padding: 7px 12px;
+      border-top: 1px solid #49365c;
+      border-right: 0;
+    }
+
+    .brand,
+    .nav-heading,
+    .sidebar-footer,
+    .coming-soon {
+      display: none;
+    }
+
+    .sidebar nav {
+      display: flex;
+      width: 100%;
+      justify-content: space-around;
+      gap: 3px;
+    }
+
+    .nav-item {
+      min-height: 44px;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1px;
+      padding: 3px 10px;
+      font-size: 0.63rem;
+    }
+
+    .nav-icon {
+      font-size: 1rem;
+    }
+
+    .main-area {
+      min-height: calc(100vh - 70px);
+      margin-left: 0;
+      padding-bottom: 70px;
+    }
+
+    .topbar {
+      min-height: 64px;
+      padding: 0 18px;
+    }
+
+    .account {
+      gap: 8px;
+    }
+
+    .account-email {
+      display: none;
+    }
+
+    .logout-button {
+      margin-left: 0;
+      padding: 7px 9px;
+    }
+
+    .dashboard-content {
+      padding: 38px 20px;
+    }
+
+    .empty-state {
+      min-height: 300px;
+    }
+  }
+</style>

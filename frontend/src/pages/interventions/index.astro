@@ -1,0 +1,1315 @@
+---
+const logoPath = "/logos/logo-background-black-tracium.png";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content="#23103e" />
+    <meta
+      name="description"
+      content="Consulta y registra intervenciones de mantenimiento en Tracium."
+    />
+    <title>Intervenciones | Tracium</title>
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <a class="brand" href="/dashboard/" aria-label="Tracium, inicio">
+          <img src={logoPath} alt="Tracium" />
+        </a>
+
+        <p class="nav-heading">ESPACIO DE TRABAJO</p>
+        <nav aria-label="Menú principal">
+          <a class="nav-item" href="/dashboard/">
+            <span class="nav-icon" aria-hidden="true">⌂</span>
+            Dashboard
+          </a>
+          <a class="nav-item active" href="/interventions/" aria-current="page">
+            <span class="nav-icon" aria-hidden="true">▤</span>
+            Intervenciones
+          </a>
+          <span class="nav-item disabled" aria-disabled="true">
+            <span class="nav-icon" aria-hidden="true">✓</span>
+            Inspecciones
+          </span>
+          <span class="nav-item disabled" aria-disabled="true">
+            <span class="nav-icon" aria-hidden="true">◷</span>
+            Auditoría
+          </span>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="status-dot" aria-hidden="true"></span>
+          Entorno de demostración
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div class="breadcrumb">
+            <a href="/dashboard/">Workspace</a><span aria-hidden="true">/</span>Intervenciones
+          </div>
+          <div class="account">
+            <span class="account-avatar" aria-hidden="true">T</span>
+            <span class="account-email" id="account-email">Cuenta demo</span>
+            <button class="logout-button" id="logout-button" type="button">Cerrar sesión</button>
+          </div>
+        </header>
+
+        <section class="page-content" aria-labelledby="page-title">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">MANTENIMIENTO</p>
+              <h1 id="page-title">Intervenciones</h1>
+              <p class="intro">Consulta y registra el trabajo realizado en cada aeronave.</p>
+            </div>
+            <button class="primary-button" id="open-form" type="button">
+              <span aria-hidden="true">＋</span> Nueva intervención
+            </button>
+          </div>
+
+          <section class="list-panel" aria-labelledby="list-title">
+            <div class="list-toolbar">
+              <div>
+                <h2 id="list-title">Todas las intervenciones</h2>
+                <p class="record-count" id="record-count">Cargando registros…</p>
+              </div>
+              <label class="search-box">
+                <span class="search-icon" aria-hidden="true">⌕</span>
+                <span class="visually-hidden">Buscar intervenciones</span>
+                <input
+                  id="search-input"
+                  type="search"
+                  placeholder="Buscar por aeronave, orden…"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+
+            <p class="storage-message" id="storage-message" role="alert" hidden></p>
+            <div class="records-list" id="records-list"></div>
+            <div class="empty-state" id="empty-state" hidden>
+              <div class="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none">
+                  <rect x="8" y="8" width="48" height="48" rx="14" />
+                  <path d="M22 20h20M22 27h20M22 34h11M22 42h20" />
+                  <path d="M38 34v14m-7-7h14" />
+                </svg>
+              </div>
+              <h2 id="empty-title">Aún no hay intervenciones</h2>
+              <p id="empty-description">
+                Registra el primer trabajo de mantenimiento para comenzar el historial de actividad.
+              </p>
+              <button class="secondary-button" id="empty-create" type="button">
+                Registrar intervención
+              </button>
+            </div>
+            <p class="list-error" id="list-error" role="status" aria-live="polite"></p>
+          </section>
+
+          <p class="privacy-note">
+            Los registros de este blueprint se guardan únicamente en este navegador.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="record-dialog" id="record-dialog" aria-labelledby="dialog-title">
+      <form class="record-form" id="record-form">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">REGISTRO DE MANTENIMIENTO</p>
+            <h2 id="dialog-title">Nueva intervención</h2>
+            <p>Completa los datos del trabajo realizado.</p>
+          </div>
+          <button
+            class="close-button"
+            id="close-form"
+            type="button"
+            aria-label="Cerrar formulario"
+          >×</button>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="aircraft">Aeronave <span aria-hidden="true">*</span></label>
+            <input
+              id="aircraft"
+              name="aircraft"
+              type="text"
+              placeholder="Ej. N123AB"
+              maxlength="40"
+              required
+              autocomplete="off"
+            />
+          </div>
+          <div class="field">
+            <label for="component">Componente <span aria-hidden="true">*</span></label>
+            <input
+              id="component"
+              name="component"
+              type="text"
+              placeholder="Ej. Motor izquierdo"
+              maxlength="100"
+              required
+              autocomplete="off"
+            />
+          </div>
+          <div class="field">
+            <label for="work-order">Orden de trabajo <span aria-hidden="true">*</span></label>
+            <input
+              id="work-order"
+              name="workOrder"
+              type="text"
+              placeholder="Ej. OT-2026-0042"
+              maxlength="60"
+              required
+              autocomplete="off"
+            />
+          </div>
+          <div class="field">
+            <label for="performed-at">Fecha y hora del trabajo <span aria-hidden="true">*</span></label>
+            <input id="performed-at" name="performedAt" type="datetime-local" required />
+          </div>
+          <div class="field full-width">
+            <label for="description">Trabajo realizado <span aria-hidden="true">*</span></label>
+            <textarea
+              id="description"
+              name="description"
+              rows="4"
+              maxlength="1200"
+              placeholder="Describe brevemente el trabajo de mantenimiento ejecutado."
+              required></textarea>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <p class="required-note">* Campos obligatorios. El usuario y la fecha de registro se asociarán automáticamente.</p>
+          <div class="form-actions">
+            <button class="cancel-button" id="cancel-form" type="button">Cancelar</button>
+            <button class="primary-button" type="submit">Guardar intervención</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
+
+<script>
+  type Intervention = {
+    id: string;
+    aircraft: string;
+    component: string;
+    workOrder: string;
+    performedAt: string;
+    description: string;
+    createdAt: string;
+    createdBy: string;
+  };
+
+  function requireElement<T extends Element>(selector: string): T {
+    const element = document.querySelector<T>(selector);
+
+    if (!element) {
+      throw new Error(`No se pudo inicializar el elemento ${selector} en la pantalla de intervenciones.`);
+    }
+
+    return element;
+  }
+
+  const sessionKey = "tracium-demo-user";
+  const storageKey = "tracium-interventions-v1";
+  const emailLabel = requireElement<HTMLSpanElement>("#account-email");
+  const logoutButton = requireElement<HTMLButtonElement>("#logout-button");
+  const listElement = requireElement<HTMLDivElement>("#records-list");
+  const recordCount = requireElement<HTMLParagraphElement>("#record-count");
+  const storageMessage = requireElement<HTMLParagraphElement>("#storage-message");
+  const listError = requireElement<HTMLParagraphElement>("#list-error");
+  const emptyState = requireElement<HTMLDivElement>("#empty-state");
+  const emptyTitle = requireElement<HTMLHeadingElement>("#empty-title");
+  const emptyDescription = requireElement<HTMLParagraphElement>("#empty-description");
+  const searchInput = requireElement<HTMLInputElement>("#search-input");
+  const dialog = requireElement<HTMLDialogElement>("#record-dialog");
+  const form = requireElement<HTMLFormElement>("#record-form");
+  const createButton = requireElement<HTMLButtonElement>("#open-form");
+  const emptyCreateButton = requireElement<HTMLButtonElement>("#empty-create");
+  const closeButton = requireElement<HTMLButtonElement>("#close-form");
+  const cancelButton = requireElement<HTMLButtonElement>("#cancel-form");
+  const aircraftInput = requireElement<HTMLInputElement>("#aircraft");
+  const componentInput = requireElement<HTMLInputElement>("#component");
+  const workOrderInput = requireElement<HTMLInputElement>("#work-order");
+  const performedAtInput = requireElement<HTMLInputElement>("#performed-at");
+  const descriptionInput = requireElement<HTMLTextAreaElement>("#description");
+
+  const currentUser = sessionStorage.getItem(sessionKey);
+
+  if (!currentUser) {
+    window.location.replace("/");
+  } else {
+    emailLabel.textContent = currentUser;
+  }
+
+  logoutButton.addEventListener("click", () => {
+    sessionStorage.removeItem(sessionKey);
+    window.location.replace("/");
+  });
+
+  let interventions: Intervention[] = [];
+  let storageAvailable = true;
+
+  function isIntervention(value: unknown): value is Intervention {
+    if (typeof value !== "object" || value === null) {
+      return false;
+    }
+
+    const record = value as Record<string, unknown>;
+
+    return [
+      "id",
+      "aircraft",
+      "component",
+      "workOrder",
+      "performedAt",
+      "description",
+      "createdAt",
+      "createdBy",
+    ].every((key) => typeof record[key] === "string");
+  }
+
+  function showStorageError(message: string): void {
+    storageMessage.textContent = message;
+    storageMessage.hidden = false;
+    createButton.disabled = true;
+    emptyCreateButton.disabled = true;
+  }
+
+  function loadInterventions(): void {
+    try {
+      const serializedRecords = localStorage.getItem(storageKey);
+
+      if (serializedRecords === null) {
+        interventions = [];
+        return;
+      }
+
+      const records: unknown = JSON.parse(serializedRecords);
+
+      if (!Array.isArray(records) || !records.every(isIntervention)) {
+        storageAvailable = false;
+        showStorageError(
+          "No se pueden leer los registros guardados: el formato almacenado no es válido. Los datos existentes no se modificarán.",
+        );
+        return;
+      }
+
+      interventions = records;
+    } catch (error) {
+      storageAvailable = false;
+      const reason = error instanceof SyntaxError
+        ? "El contenido guardado está dañado."
+        : "El navegador no permitió acceder al almacenamiento local.";
+      showStorageError(`${reason} No se modificaron los datos existentes.`);
+    }
+  }
+
+  function formatDate(value: string): string {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Fecha no disponible";
+    }
+
+    return new Intl.DateTimeFormat("es-MX", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(date);
+  }
+
+  function updateEmptyState(visibleCount: number, hasSearch: boolean): void {
+    emptyState.hidden = visibleCount > 0;
+    emptyCreateButton.hidden = hasSearch || interventions.length > 0 || !storageAvailable;
+
+    if (hasSearch && interventions.length > 0) {
+      emptyTitle.textContent = "No encontramos coincidencias";
+      emptyDescription.textContent = "Prueba con otra aeronave, componente, orden de trabajo o responsable.";
+    } else {
+      emptyTitle.textContent = "Aún no hay intervenciones";
+      emptyDescription.textContent =
+        "Registra el primer trabajo de mantenimiento para comenzar el historial de actividad.";
+    }
+  }
+
+  function renderInterventions(): void {
+    const query = searchInput.value.trim().toLocaleLowerCase("es");
+    const filteredRecords = [...interventions]
+      .filter((record) =>
+        [
+          record.id,
+          record.aircraft,
+          record.component,
+          record.workOrder,
+          record.description,
+          record.createdBy,
+        ].some((value) => value.toLocaleLowerCase("es").includes(query)),
+      )
+      .sort((first, second) => second.createdAt.localeCompare(first.createdAt));
+
+    listElement.replaceChildren();
+    recordCount.textContent = `${interventions.length} ${
+      interventions.length === 1 ? "registro" : "registros"
+    }`;
+    listError.textContent = "";
+
+    for (const record of filteredRecords) {
+      const card = document.createElement("article");
+      card.className = "intervention-card";
+
+      const header = document.createElement("div");
+      header.className = "card-header";
+      const identity = document.createElement("div");
+      identity.className = "record-identity";
+      const aircraft = document.createElement("h3");
+      aircraft.textContent = record.aircraft;
+      const component = document.createElement("p");
+      component.className = "component-name";
+      component.textContent = record.component;
+      identity.append(aircraft, component);
+
+      const badge = document.createElement("span");
+      badge.className = "record-status";
+      badge.textContent = "Registrada";
+      header.append(identity, badge);
+
+      const metadata = document.createElement("div");
+      metadata.className = "record-metadata";
+      const workOrder = document.createElement("span");
+      workOrder.className = "work-order";
+      workOrder.textContent = `Orden ${record.workOrder}`;
+      const date = document.createElement("span");
+      date.textContent = `Trabajo: ${formatDate(record.performedAt)}`;
+      metadata.append(workOrder, date);
+
+      const description = document.createElement("p");
+      description.className = "work-description";
+      description.textContent = record.description;
+
+      const footer = document.createElement("div");
+      footer.className = "card-footer";
+      const reference = document.createElement("span");
+      reference.textContent = `ID ${record.id}`;
+      const author = document.createElement("span");
+      author.textContent = `Registrada por ${record.createdBy} · ${formatDate(record.createdAt)}`;
+      footer.append(reference, author);
+      card.append(header, metadata, description, footer);
+      listElement.append(card);
+    }
+
+    updateEmptyState(filteredRecords.length, query.length > 0);
+  }
+
+  function openForm(): void {
+    if (!storageAvailable) {
+      return;
+    }
+
+    const localDate = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
+      .toISOString()
+      .slice(0, 16);
+    performedAtInput.value = localDate;
+    dialog.showModal();
+    aircraftInput.focus();
+  }
+
+  createButton.addEventListener("click", openForm);
+  emptyCreateButton.addEventListener("click", openForm);
+  closeButton.addEventListener("click", () => dialog.close());
+  cancelButton.addEventListener("click", () => dialog.close());
+  searchInput.addEventListener("input", renderInterventions);
+
+  dialog.addEventListener("click", (event: MouseEvent) => {
+    if (event.target === dialog) {
+      dialog.close();
+    }
+  });
+
+  form.addEventListener("submit", (event: SubmitEvent) => {
+    event.preventDefault();
+
+    if (!form.reportValidity()) {
+      return;
+    }
+
+    if (!currentUser || !storageAvailable) {
+      return;
+    }
+
+    const performedAt = new Date(performedAtInput.value);
+
+    if (Number.isNaN(performedAt.getTime())) {
+      listError.textContent = "Ingresa una fecha y hora válidas para el trabajo realizado.";
+      return;
+    }
+
+    const record: Intervention = {
+      id: `INT-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      aircraft: aircraftInput.value.trim(),
+      component: componentInput.value.trim(),
+      workOrder: workOrderInput.value.trim(),
+      performedAt: performedAt.toISOString(),
+      description: descriptionInput.value.trim(),
+      createdAt: new Date().toISOString(),
+      createdBy: currentUser,
+    };
+
+    if (
+      !record.aircraft ||
+      !record.component ||
+      !record.workOrder ||
+      !record.description
+    ) {
+      listError.textContent = "Completa todos los campos obligatorios con datos válidos.";
+      return;
+    }
+
+    const updatedRecords = [record, ...interventions];
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(updatedRecords));
+      interventions = updatedRecords;
+      form.reset();
+      dialog.close();
+      renderInterventions();
+    } catch {
+      listError.textContent =
+        "No se pudo guardar la intervención en este navegador. Verifica el espacio disponible o la configuración de privacidad.";
+    }
+  });
+
+  loadInterventions();
+  renderInterventions();
+</script>
+
+<style>
+  :global(*) {
+    box-sizing: border-box;
+  }
+
+  :global(body) {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    color: #211b2e;
+    background: #f6f5f8;
+    font-family:
+      Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  :global(button),
+  :global(input),
+  :global(textarea) {
+    font: inherit;
+  }
+
+  :global(button:focus-visible),
+  :global(a:focus-visible),
+  :global(input:focus-visible),
+  :global(textarea:focus-visible) {
+    outline: 3px solid rgb(121 2 255 / 28%);
+    outline-offset: 3px;
+  }
+
+  .app-layout {
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 1;
+    display: flex;
+    width: 254px;
+    flex-direction: column;
+    padding: 29px 17px 20px;
+    border-right: 1px solid #49365c;
+    background: linear-gradient(180deg, #2e2d4f 0%, #23103e 58%, #351070 100%);
+  }
+
+  .brand {
+    display: block;
+    width: 184px;
+    margin: 2px 0 49px 8px;
+  }
+
+  .brand img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .nav-heading,
+  .eyebrow {
+    color: #d1c5df;
+    font-size: 0.68rem;
+    font-weight: 750;
+    letter-spacing: 0.13em;
+  }
+
+  .nav-heading {
+    margin: 0 11px 12px;
+  }
+
+  nav {
+    display: grid;
+    gap: 5px;
+  }
+
+  .nav-item {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 12px;
+    padding: 0 11px;
+    border-radius: 8px;
+    color: #eee8f5;
+    font-size: 0.87rem;
+    font-weight: 550;
+    text-decoration: none;
+  }
+
+  .nav-item:hover:not(.disabled) {
+    background: rgb(255 255 255 / 9%);
+  }
+
+  .nav-item.active {
+    border-left: 3px solid #b249f1;
+    color: #fff;
+    background: rgb(178 73 241 / 19%);
+    font-weight: 700;
+  }
+
+  .nav-item.disabled {
+    color: #c1b8ce;
+    cursor: default;
+  }
+
+  .nav-icon {
+    display: grid;
+    width: 21px;
+    place-items: center;
+    color: inherit;
+    font-size: 1.12rem;
+  }
+
+  .sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: auto;
+    padding: 15px 8px 2px;
+    border-top: 1px solid rgb(255 255 255 / 18%);
+    color: #ded5e8;
+    font-size: 0.73rem;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #05b179;
+  }
+
+  .main-area {
+    min-height: 100vh;
+    margin-left: 254px;
+  }
+
+  .topbar {
+    display: flex;
+    min-height: 72px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 clamp(22px, 4vw, 56px);
+    border-bottom: 1px solid #ece9f0;
+    background: rgb(255 255 255 / 86%);
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    color: #352e3f;
+    font-size: 0.82rem;
+    font-weight: 650;
+  }
+
+  .breadcrumb a {
+    color: #898191;
+    font-weight: 450;
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: #7902ff;
+  }
+
+  .breadcrumb > span {
+    color: #c5becb;
+  }
+
+  .account {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .account-avatar {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: linear-gradient(140deg, #b249f1, #7902ff);
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .account-email {
+    color: #4c4457;
+    font-size: 0.8rem;
+  }
+
+  .logout-button,
+  .cancel-button {
+    padding: 8px 11px;
+    border: 1px solid #e8e3ec;
+    border-radius: 7px;
+    color: #62596d;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+
+  .logout-button:hover,
+  .cancel-button:hover {
+    border-color: #b249f1;
+    color: #7902ff;
+  }
+
+  .page-content {
+    width: min(100%, 1250px);
+    margin: 0 auto;
+    padding: clamp(36px, 5vh, 58px) clamp(22px, 4vw, 56px);
+  }
+
+  .page-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 22px;
+    margin-bottom: 31px;
+  }
+
+  .eyebrow {
+    margin: 0 0 11px;
+    color: #7902ff;
+  }
+
+  h1 {
+    margin: 0;
+    color: #23103e;
+    font-size: clamp(1.9rem, 3vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+  }
+
+  .intro {
+    margin: 12px 0 0;
+    color: #797182;
+    font-size: 0.94rem;
+    line-height: 1.6;
+  }
+
+  .primary-button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    color: white;
+    background: linear-gradient(105deg, #7902ff 0%, #b249f1 100%);
+    box-shadow: 0 6px 14px rgb(121 2 255 / 17%);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: box-shadow 140ms ease, transform 140ms ease;
+  }
+
+  .primary-button:hover {
+    box-shadow: 0 9px 19px rgb(121 2 255 / 25%);
+    transform: translateY(-1px);
+  }
+
+  .primary-button > span {
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .primary-button:disabled,
+  .secondary-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
+  }
+
+  .list-panel {
+    min-height: 330px;
+    padding: 22px;
+    border: 1px solid #ece8f0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 16px rgb(35 16 62 / 3%);
+  }
+
+  .list-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 21px;
+  }
+
+  .list-toolbar h2 {
+    margin: 0;
+    color: #30263c;
+    font-size: 0.98rem;
+    font-weight: 700;
+  }
+
+  .record-count {
+    margin: 5px 0 0;
+    color: #898191;
+    font-size: 0.75rem;
+  }
+
+  .search-box {
+    display: flex;
+    width: min(100%, 310px);
+    min-height: 41px;
+    align-items: center;
+    gap: 8px;
+    padding: 0 11px;
+    border: 1px solid #e4dfe9;
+    border-radius: 7px;
+    color: #8e8499;
+    background: #fff;
+  }
+
+  .search-box:focus-within {
+    border-color: #7902ff;
+    box-shadow: 0 0 0 3px rgb(121 2 255 / 10%);
+  }
+
+  .search-icon {
+    font-size: 1.35rem;
+    line-height: 1;
+  }
+
+  .search-box input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    color: #30263c;
+    background: transparent;
+    font-size: 0.8rem;
+  }
+
+  .search-box input:focus-visible {
+    outline: 0;
+  }
+
+  .search-box input::placeholder {
+    color: #a39cab;
+  }
+
+  .records-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .intervention-card {
+    padding: 17px 18px 14px;
+    border: 1px solid #ece8f0;
+    border-radius: 9px;
+    background: #fff;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+
+  .intervention-card:hover {
+    border-color: #d8c4ec;
+    box-shadow: 0 4px 13px rgb(35 16 62 / 5%);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+  }
+
+  .record-identity h3 {
+    margin: 0;
+    color: #30263c;
+    font-size: 0.98rem;
+    font-weight: 700;
+  }
+
+  .component-name {
+    margin: 4px 0 0;
+    color: #797182;
+    font-size: 0.81rem;
+  }
+
+  .record-status {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    border: 1px solid #d8f1e8;
+    border-radius: 15px;
+    color: #08774f;
+    background: #effaf5;
+    font-size: 0.68rem;
+    font-weight: 650;
+  }
+
+  .record-metadata {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 15px;
+    margin-top: 14px;
+    color: #6f687a;
+    font-size: 0.76rem;
+  }
+
+  .work-order {
+    color: #513478;
+    font-weight: 650;
+  }
+
+  .work-description {
+    margin: 12px 0 14px;
+    color: #554d60;
+    font-size: 0.83rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  .card-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 14px;
+    padding-top: 10px;
+    border-top: 1px solid #f0edf3;
+    color: #928a9b;
+    font-size: 0.7rem;
+  }
+
+  .empty-state {
+    display: flex;
+    min-height: 235px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 18px;
+    text-align: center;
+  }
+
+  .empty-state[hidden] {
+    display: none;
+  }
+
+  .empty-icon {
+    display: grid;
+    width: 54px;
+    height: 54px;
+    place-items: center;
+    margin-bottom: 15px;
+    border-radius: 16px;
+    background: #f4ebff;
+  }
+
+  .empty-icon svg {
+    width: 34px;
+    stroke: #7902ff;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+  }
+
+  .empty-icon rect {
+    stroke: #c99df4;
+    stroke-width: 1.5;
+  }
+
+  .empty-state h2 {
+    margin: 0;
+    color: #30263c;
+    font-size: 0.98rem;
+    font-weight: 700;
+  }
+
+  .empty-state > p {
+    max-width: 420px;
+    margin: 8px 0 17px;
+    color: #827b8c;
+    font-size: 0.81rem;
+    line-height: 1.6;
+  }
+
+  .secondary-button {
+    min-height: 38px;
+    padding: 0 13px;
+    border: 1px solid #ded3ed;
+    border-radius: 7px;
+    color: #60338f;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .secondary-button:hover {
+    border-color: #b249f1;
+    background: #faf6ff;
+  }
+
+  .storage-message,
+  .list-error {
+    color: #a72937;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .storage-message {
+    margin: 0 0 17px;
+    padding: 11px 13px;
+    border: 1px solid #f1ced1;
+    border-radius: 7px;
+    background: #fff5f5;
+  }
+
+  .storage-message[hidden] {
+    display: none;
+  }
+
+  .list-error:not(:empty) {
+    margin: 15px 0 0;
+  }
+
+  .privacy-note {
+    margin: 13px 0 0;
+    color: #8c8494;
+    font-size: 0.72rem;
+  }
+
+  .record-dialog {
+    width: min(100% - 32px, 680px);
+    max-height: min(90vh, 800px);
+    padding: 0;
+    overflow: auto;
+    border: 1px solid #e8e2ed;
+    border-radius: 14px;
+    color: #211b2e;
+    background: #fff;
+    box-shadow: 0 24px 80px rgb(24 10 40 / 23%);
+  }
+
+  .record-dialog::backdrop {
+    background: rgb(27 15 41 / 52%);
+    backdrop-filter: blur(2px);
+  }
+
+  .record-form {
+    padding: 28px;
+  }
+
+  .dialog-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 23px;
+  }
+
+  .dialog-heading .eyebrow {
+    margin-bottom: 8px;
+  }
+
+  .dialog-heading h2 {
+    margin: 0;
+    color: #23103e;
+    font-size: 1.45rem;
+    letter-spacing: -0.035em;
+  }
+
+  .dialog-heading > div > p:last-child {
+    margin: 7px 0 0;
+    color: #797182;
+    font-size: 0.82rem;
+  }
+
+  .close-button {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 0;
+    border-radius: 7px;
+    color: #71687e;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .close-button:hover {
+    color: #7902ff;
+    background: #f4ebff;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 17px 15px;
+  }
+
+  .field label {
+    display: block;
+    margin-bottom: 7px;
+    color: #302a3c;
+    font-size: 0.79rem;
+    font-weight: 650;
+  }
+
+  .field label span {
+    color: #d93445;
+  }
+
+  .field input,
+  .field textarea {
+    width: 100%;
+    min-height: 43px;
+    padding: 10px 12px;
+    border: 1px solid #d9d4e1;
+    border-radius: 7px;
+    outline: none;
+    color: #211b2e;
+    background: #fff;
+    font-size: 0.82rem;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+
+  .field textarea {
+    min-height: 97px;
+    resize: vertical;
+  }
+
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: #a39cab;
+  }
+
+  .field input:hover,
+  .field textarea:hover {
+    border-color: #a79aae;
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    border-color: #7902ff;
+    box-shadow: 0 0 0 3px rgb(121 2 255 / 10%);
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 21px;
+    padding-top: 17px;
+    border-top: 1px solid #eeeaf2;
+  }
+
+  .required-note {
+    max-width: 260px;
+    margin: 0;
+    color: #898191;
+    font-size: 0.7rem;
+    line-height: 1.5;
+  }
+
+  .form-actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 9px;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 760px) {
+    .sidebar {
+      inset: auto 0 0;
+      width: auto;
+      height: 70px;
+      flex-direction: row;
+      align-items: center;
+      padding: 7px 12px;
+      border-top: 1px solid #49365c;
+      border-right: 0;
+    }
+
+    .brand,
+    .nav-heading,
+    .sidebar-footer {
+      display: none;
+    }
+
+    .sidebar nav {
+      display: flex;
+      width: 100%;
+      justify-content: space-around;
+      gap: 3px;
+    }
+
+    .nav-item {
+      min-height: 44px;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1px;
+      padding: 3px 10px;
+      font-size: 0.63rem;
+    }
+
+    .nav-icon {
+      font-size: 1rem;
+    }
+
+    .main-area {
+      min-height: calc(100vh - 70px);
+      margin-left: 0;
+      padding-bottom: 70px;
+    }
+
+    .topbar {
+      min-height: 64px;
+      padding: 0 18px;
+    }
+
+    .account {
+      gap: 8px;
+    }
+
+    .account-email {
+      display: none;
+    }
+
+    .page-content {
+      padding: 34px 18px;
+    }
+
+    .page-heading {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 17px;
+      margin-bottom: 23px;
+    }
+
+    .list-panel {
+      padding: 17px 13px;
+    }
+
+    .list-toolbar {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .search-box {
+      width: 100%;
+    }
+
+    .card-footer {
+      flex-direction: column;
+    }
+
+    .record-form {
+      padding: 23px 19px;
+    }
+
+    .dialog-footer {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .required-note {
+      max-width: none;
+    }
+
+    .form-actions {
+      justify-content: flex-end;
+    }
+  }
+
+  @media (max-width: 440px) {
+    .breadcrumb {
+      gap: 7px;
+      font-size: 0.74rem;
+    }
+
+    .logout-button {
+      padding: 7px 9px;
+      font-size: 0.7rem;
+    }
+
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .full-width {
+      grid-column: auto;
+    }
+
+    .form-actions {
+      flex-direction: column-reverse;
+    }
+
+    .form-actions button {
+      width: 100%;
+    }
+  }
+</style>
