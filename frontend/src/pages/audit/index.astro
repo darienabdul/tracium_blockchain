@@ -54,7 +54,7 @@ const logoPath = "/logos/logo-background-black-tracium.png";
 
           <section class="panel" aria-labelledby="events-title">
             <div class="panel-heading">
-              <div><p class="eyebrow">LÍNEA DE TIEMPO</p><h2 id="events-title">Eventos registrados</h2></div>
+              <div><p class="eyebrow">POR INTERVENCIÓN</p><h2 id="events-title">Eventos registrados</h2></div>
               <span class="panel-count" id="event-count">0 eventos</span>
             </div>
             <div class="timeline" id="timeline"></div>
@@ -90,6 +90,7 @@ const logoPath = "/logos/logo-background-black-tracium.png";
   const inspections = read<Record<string, { inspector: string; decision: string; updatedAt: string }>>("tracium-inspections-v1", {});
   const approvals = read<Record<string, { responsible: string; decision: string; updatedAt: string }>>("tracium-approvals-v1", {});
   const events: AuditEvent[] = [];
+  const recordsById = new Map(records.map((record) => [record.id, record]));
 
   for (const record of records) {
     events.push({ id: `created-${record.id}`, recordId: record.id, category: "intervention", label: "Intervención registrada", detail: `${record.aircraft} · ${record.workOrder}`, actor: record.createdBy, createdAt: record.createdAt });
@@ -112,18 +113,74 @@ const logoPath = "/logos/logo-background-black-tracium.png";
   function render(): void {
     const query = search.value.trim().toLocaleLowerCase("es");
     const selected = filter.value;
-    const filtered = events.filter((event) => (selected === "all" || event.category === selected) && [event.recordId, event.label, event.detail, event.actor].some((value) => value.toLocaleLowerCase("es").includes(query))).sort((first, second) => second.createdAt.localeCompare(first.createdAt));
-    timeline.replaceChildren();
+    const filtered = events.filter((event) => {
+      const record = recordsById.get(event.recordId);
+      const searchableValues = [
+        event.recordId,
+        event.label,
+        event.detail,
+        event.actor,
+        record?.aircraft ?? "",
+        record?.component ?? "",
+        record?.workOrder ?? "",
+      ];
+
+      return (selected === "all" || event.category === selected)
+        && searchableValues.some((value) => value.toLocaleLowerCase("es").includes(query));
+    }).sort((first, second) => second.createdAt.localeCompare(first.createdAt));
+
+    const groupedEvents = new Map<string, AuditEvent[]>();
     for (const event of filtered) {
-      const item = document.createElement("article"); item.className = `timeline-item ${event.category}`;
-      const marker = document.createElement("span"); marker.className = "timeline-marker";
-      const body = document.createElement("div"); const label = document.createElement("strong"); label.textContent = event.label;
-      const detail = document.createElement("p"); detail.textContent = `${event.detail} · ${event.recordId}`;
-      const meta = document.createElement("small"); meta.textContent = `${event.actor} · ${formatDate(event.createdAt)}`;
-      body.append(label, detail, meta); item.append(marker, body); timeline.append(item);
+      const group = groupedEvents.get(event.recordId) ?? [];
+      group.push(event);
+      groupedEvents.set(event.recordId, group);
+    }
+
+    timeline.replaceChildren();
+
+    let groupIndex = 0;
+    for (const [recordId, groupEvents] of groupedEvents) {
+      const record = recordsById.get(recordId);
+      const group = document.createElement("details");
+      group.className = "audit-group";
+      group.open = groupIndex === 0;
+
+      const groupHeader = document.createElement("summary");
+      groupHeader.className = "audit-group-heading";
+      const groupTitle = document.createElement("strong");
+      groupTitle.textContent = record
+        ? `${record.aircraft} · ${record.component}`
+        : `Intervención ${recordId}`;
+      const groupMeta = document.createElement("span");
+      groupMeta.textContent = `${record?.workOrder ?? recordId} · ${groupEvents.length} ${groupEvents.length === 1 ? "evento" : "eventos"}`;
+      groupHeader.append(groupTitle, groupMeta);
+
+      const groupTimeline = document.createElement("div");
+      groupTimeline.className = "group-timeline";
+
+      for (const event of groupEvents) {
+        const item = document.createElement("article");
+        item.className = `timeline-item ${event.category}`;
+        const marker = document.createElement("span");
+        marker.className = "timeline-marker";
+        const body = document.createElement("div");
+        const label = document.createElement("strong");
+        label.textContent = event.label;
+        const detail = document.createElement("p");
+        detail.textContent = event.detail;
+        const meta = document.createElement("small");
+        meta.textContent = `${event.actor} · ${formatDate(event.createdAt)}`;
+        body.append(label, detail, meta);
+        item.append(marker, body);
+        groupTimeline.append(item);
+      }
+
+      group.append(groupHeader, groupTimeline);
+      timeline.append(group);
+      groupIndex += 1;
     }
     document.querySelector("#event-count")!.textContent = `${filtered.length} ${filtered.length === 1 ? "evento" : "eventos"}`;
-    empty.hidden = filtered.length > 0;
+    empty.hidden = groupedEvents.size > 0;
   }
   search.addEventListener("input", render); filter.addEventListener("change", render); render();
 </script>
@@ -160,11 +217,24 @@ const logoPath = "/logos/logo-background-black-tracium.png";
   .toolbar select { width: 190px; padding: 0 10px; border: 1px solid #ded8e5; border-radius: 7px; color: #40364b; background: #fff; font-size: .78rem; }
   .panel { padding: 22px; border: 1px solid #ece8f0; border-radius: 10px; background: #fff; }
   .panel-heading { display: flex; justify-content: space-between; margin-bottom: 18px; } .panel-heading .eyebrow { margin-bottom: 7px; } .panel-count { color: #958c9f; font-size: .72rem; }
-  .timeline { display: grid; gap: 0; } .timeline-item { position: relative; display: grid; grid-template-columns: 18px 1fr; gap: 12px; min-height: 72px; }
-  .timeline-item:not(:last-child)::before { position: absolute; top: 16px; bottom: 0; left: 6px; width: 1px; background: #e5ddec; content: ""; }
-  .timeline-marker { position: relative; z-index: 1; width: 13px; height: 13px; margin-top: 2px; border: 3px solid #eadcf5; border-radius: 50%; background: #7902ff; }
-  .timeline-item.inspection .timeline-marker { background: #facf1e; } .timeline-item.approval .timeline-marker { background: #05b179; }
-  .timeline-item strong { display: block; color: #4a4054; font-size: .78rem; } .timeline-item p { margin: 4px 0; color: #7b7285; font-size: .73rem; } .timeline-item small { color: #a097a8; font-size: .67rem; }
+  .timeline { display: grid; gap: 14px; }
+  :global(.audit-group) { padding: 16px; border: 1px solid #ece8f0; border-radius: 9px; background: #fff; }
+  :global(.audit-group-heading) { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-bottom: 12px; border-bottom: 1px solid #f0edf3; cursor: pointer; list-style: none; }
+  :global(.audit-group-heading::-webkit-details-marker) { display: none; }
+  :global(.audit-group-heading::after) { margin-left: auto; color: #7902ff; content: "⌄"; font-size: 1rem; line-height: 1; transition: transform 140ms ease; }
+  :global(.audit-group:not([open]) .audit-group-heading) { padding-bottom: 0; border-bottom: 0; }
+  :global(.audit-group:not([open]) .audit-group-heading::after) { transform: rotate(-90deg); }
+  :global(.audit-group-heading strong) { color: #40364b; font-size: .8rem; }
+  :global(.audit-group-heading span) { color: #958c9f; font-size: .68rem; white-space: nowrap; }
+  :global(.group-timeline) { display: grid; gap: 0; padding-top: 14px; }
+  :global(.timeline-item) { position: relative; display: grid; grid-template-columns: 18px 1fr; gap: 12px; min-height: 72px; }
+  :global(.timeline-item:not(:last-child)::before) { position: absolute; top: 16px; bottom: 0; left: 6px; width: 1px; background: #e5ddec; content: ""; }
+  :global(.timeline-marker) { position: relative; z-index: 1; width: 13px; height: 13px; margin-top: 2px; border: 3px solid #eadcf5; border-radius: 50%; background: #7902ff; }
+  :global(.timeline-item.inspection .timeline-marker) { background: #facf1e; }
+  :global(.timeline-item.approval .timeline-marker) { background: #05b179; }
+  :global(.timeline-item strong) { display: block; color: #4a4054; font-size: .78rem; }
+  :global(.timeline-item p) { margin: 4px 0; color: #7b7285; font-size: .73rem; }
+  :global(.timeline-item small) { color: #a097a8; font-size: .67rem; }
   .empty-state { padding: 35px; color: #958c9f; text-align: center; font-size: .8rem; } .empty-state[hidden] { display: none; }
   @media (max-width: 900px) { .sidebar { position: static; width: auto; padding: 17px 18px; } .brand { width: 155px; margin: 0 0 18px; } .nav-heading, .sidebar-footer { display: none; } nav { grid-template-columns: repeat(4, 1fr); } .nav-item { justify-content: center; min-height: 38px; font-size: .75rem; } .main-area { margin-left: 0; } }
   @media (max-width: 700px) { .topbar { align-items: flex-start; flex-direction: column; padding: 15px 22px; } .page-heading, .toolbar { align-items: flex-start; flex-direction: column; } .toolbar select { width: 100%; } .stellar-badge { white-space: normal; } }

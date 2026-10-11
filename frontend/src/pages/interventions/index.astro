@@ -103,6 +103,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
                 <tbody id="records-list"></tbody>
               </table>
             </div>
+            <p class="table-scroll-hint">Desliza horizontalmente para consultar todas las columnas.</p>
             <div class="empty-state" id="empty-state" hidden>
               <div class="empty-icon" aria-hidden="true">
                 <svg viewBox="0 0 64 64" fill="none">
@@ -224,6 +225,15 @@ import AccountMenu from "../../components/AccountMenu.astro";
     createdBy: string;
   };
 
+  type InterventionStatus = "registered" | "inspection" | "approved" | "rejected";
+
+  const statusLabels: Record<InterventionStatus, string> = {
+    registered: "Registrada",
+    inspection: "En inspección",
+    approved: "Aprobada",
+    rejected: "Rechazada",
+  };
+
   function requireElement<T extends Element>(selector: string): T {
     const element = document.querySelector<T>(selector);
 
@@ -236,6 +246,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
 
   const sessionKey = "tracium-demo-user";
   const storageKey = "tracium-interventions-v1";
+  const detailsStorageKey = "tracium-intervention-details-v1";
   const emailLabel = requireElement<HTMLSpanElement>("#account-email");
   const logoutButton = requireElement<HTMLButtonElement>("#logout-button");
   const listElement = requireElement<HTMLTableSectionElement>("#records-list");
@@ -273,6 +284,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
   });
 
   let interventions: Intervention[] = [];
+  let interventionDetails: Record<string, unknown> = {};
   let storageAvailable = true;
 
   function isIntervention(value: unknown): value is Intervention {
@@ -328,6 +340,43 @@ import AccountMenu from "../../components/AccountMenu.astro";
         : "El navegador no permitió acceder al almacenamiento local.";
       showStorageError(`${reason} No se modificaron los datos existentes.`);
     }
+  }
+
+  function isInterventionStatus(value: unknown): value is InterventionStatus {
+    return value === "registered" || value === "inspection" || value === "approved" || value === "rejected";
+  }
+
+  function loadInterventionDetails(): void {
+    try {
+      const serializedDetails = localStorage.getItem(detailsStorageKey);
+
+      if (serializedDetails === null) {
+        interventionDetails = {};
+        return;
+      }
+
+      const details: unknown = JSON.parse(serializedDetails);
+
+      if (typeof details === "object" && details !== null && !Array.isArray(details)) {
+        interventionDetails = details as Record<string, unknown>;
+      }
+    } catch {
+      interventionDetails = {};
+    }
+  }
+
+  function getInterventionStatus(interventionId: string): InterventionStatus {
+    const detail = interventionDetails[interventionId];
+
+    if (typeof detail === "object" && detail !== null) {
+      const status = (detail as Record<string, unknown>).status;
+
+      if (isInterventionStatus(status)) {
+        return status;
+      }
+    }
+
+    return "registered";
   }
 
   function formatDate(value: string): string {
@@ -387,9 +436,10 @@ import AccountMenu from "../../components/AccountMenu.astro";
 
       const identityCell = document.createElement("td");
       identityCell.className = "identity-cell";
-      const aircraft = document.createElement("h3");
+      const aircraft = document.createElement("div");
+      aircraft.className = "aircraft-name";
       aircraft.textContent = record.aircraft;
-      const component = document.createElement("p");
+      const component = document.createElement("div");
       component.className = "component-name";
       component.textContent = record.component;
       identityCell.append(aircraft, component);
@@ -405,8 +455,9 @@ import AccountMenu from "../../components/AccountMenu.astro";
       dateCell.textContent = formatDate(record.performedAt);
       const statusCell = document.createElement("td");
       const badge = document.createElement("span");
-      badge.className = "record-status";
-      badge.textContent = "Registrada";
+      const status = getInterventionStatus(record.id);
+      badge.className = `record-status status-${status}`;
+      badge.textContent = statusLabels[status];
       statusCell.append(badge);
 
       const actionCell = document.createElement("td");
@@ -509,6 +560,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
   });
 
   loadInterventions();
+  loadInterventionDetails();
   renderInterventions();
 </script>
 
@@ -863,9 +915,26 @@ import AccountMenu from "../../components/AccountMenu.astro";
   }
 
   .records-table-wrap {
+    width: 100%;
     overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
     border: 1px solid #ece8f0;
     border-radius: 9px;
+  }
+
+  .records-table-wrap::-webkit-scrollbar {
+    height: 9px;
+  }
+
+  .records-table-wrap::-webkit-scrollbar-thumb {
+    border-radius: 9px;
+    background: #cfc2dc;
+  }
+
+  .records-table-wrap::-webkit-scrollbar-track {
+    background: #f7f4f9;
   }
 
   .records-table-wrap[hidden] {
@@ -874,7 +943,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
 
   .records-table {
     width: 100%;
-    min-width: 820px;
+    min-width: 735px;
     border-collapse: collapse;
     background: #fff;
   }
@@ -884,7 +953,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
     border-bottom: 1px solid #e8e3ec;
     color: #82798d;
     background: #fbfafc;
-    font-size: 0.66rem;
+    font-size: 0.61rem;
     font-weight: 750;
     letter-spacing: 0.04em;
     text-align: left;
@@ -892,55 +961,99 @@ import AccountMenu from "../../components/AccountMenu.astro";
     white-space: nowrap;
   }
 
-  .records-table td {
-    padding: 13px 14px;
+  :global(.records-table tbody td) {
+    padding: 5px;
     border-bottom: 1px solid #f0edf3;
     color: #675d70;
-    font-size: 0.75rem;
+    font-size: 12px;
     white-space: nowrap;
   }
 
-  .records-table tbody tr:last-child td {
+  :global(.records-table tbody tr:last-child td) {
     border-bottom: 0;
   }
 
-  .records-table tbody tr:hover {
+  :global(.records-table tbody tr:hover) {
     background: #fcf9ff;
   }
 
-  .records-table .identity-cell {
+  .records-table th:last-child,
+  :global(.records-table td:last-child) {
+    position: sticky;
+    right: 0;
+    background: #fff;
+    box-shadow: -5px 0 9px rgb(35 16 62 / 7%);
+  }
+
+  :global(.records-table tbody tr:hover td:last-child) {
+    background: #fcf9ff;
+  }
+
+  :global(.records-table .identity-cell) {
     min-width: 175px;
     white-space: normal;
   }
 
-  .identity-cell h3 {
+  :global(.identity-cell .aircraft-name) {
     margin: 0;
     color: #30263c;
-    font-size: 0.79rem;
+    font-size: 0.74rem;
     font-weight: 700;
   }
 
-  .identity-cell .component-name {
+  :global(.identity-cell .component-name) {
     margin: 4px 0 0;
     color: #797182;
-    font-size: 0.7rem;
+    font-size: 0.66rem;
   }
 
-  .records-table .work-order {
+  :global(.records-table .work-order) {
     color: #513478;
     font-weight: 650;
   }
 
-  .records-table .record-status {
+  :global(.records-table .record-status) {
     display: inline-flex;
+    align-items: center;
+    padding: 4px 9px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
   }
 
-  .action-cell {
+  :global(.records-table .status-registered) {
+    border-color: #bfead9;
+    color: #08774f;
+    background: #effaf5;
+  }
+
+  :global(.records-table .status-inspection) {
+    border-color: #f2d79e;
+    color: #9a5b00;
+    background: #fff8e9;
+  }
+
+  :global(.records-table .status-approved) {
+    border-color: #c8d7f5;
+    color: #315da8;
+    background: #f0f5ff;
+  }
+
+  :global(.records-table .status-rejected) {
+    border-color: #efc4c4;
+    color: #a63e3e;
+    background: #fff2f2;
+  }
+
+  :global(.action-cell) {
     width: 54px;
     text-align: center;
+    vertical-align: middle;
   }
 
-  .view-button {
+  :global(.view-button) {
     display: inline-grid;
     width: 31px;
     height: 31px;
@@ -953,20 +1066,27 @@ import AccountMenu from "../../components/AccountMenu.astro";
     transition: border-color 140ms ease, background 140ms ease;
   }
 
-  .view-button:hover,
-  .view-button:focus-visible {
+  :global(.view-button:hover),
+  :global(.view-button:focus-visible) {
     border-color: #b249f1;
     background: #f7effd;
     outline: 0;
   }
 
-  .view-button svg {
-    width: 17px;
-    height: 17px;
+  :global(.view-button svg) {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
     stroke: currentColor;
     stroke-linecap: round;
     stroke-linejoin: round;
     stroke-width: 1.7;
+  }
+
+  .table-scroll-hint {
+    margin: 8px 0 0;
+    color: #958c9f;
+    font-size: 0.67rem;
   }
 
   .intervention-card {
