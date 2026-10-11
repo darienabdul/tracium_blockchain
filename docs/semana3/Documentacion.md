@@ -22,60 +22,60 @@ En esta entrega el front cubre **once rutas** organizadas en cinco bloques funci
 
 **Acceso**
 
-| Ruta | Pantalla | Qué permite hacer |
-| :---: | :--- | :--- |
-| `/` | **Inicio de sesión** | Acceso al sistema. Presenta el panel de marca con el posicionamiento del producto ("Confianza en cada registro") y un formulario con validación de campos, manejo de sesión de demostración y redirección al dashboard. |
-| `/forgot-password/` | **Recuperar acceso** | Solicita el correo de la cuenta para recuperar la contraseña. Registra la solicitud en el navegador y aclara que, en una integración real, se enviaría un enlace por correo. |
+|        Ruta         | Pantalla             | Qué permite hacer                                                                                                                                                                                                       |
+| :-----------------: | :------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         `/`         | **Inicio de sesión** | Acceso al sistema. Presenta el panel de marca con el posicionamiento del producto ("Confianza en cada registro") y un formulario con validación de campos, manejo de sesión de demostración y redirección al dashboard. |
+| `/forgot-password/` | **Recuperar acceso** | Solicita el correo de la cuenta para recuperar la contraseña. Registra la solicitud en el navegador y aclara que, en una integración real, se enviaría un enlace por correo.                                            |
 
 **Espacio de trabajo**
 
-| Ruta | Pantalla | Qué permite hacer |
-| :---: | :--- | :--- |
+|     Ruta      | Pantalla      | Qué permite hacer                                                                                                                                                                                                 |
+| :-----------: | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/dashboard/` | **Dashboard** | Punto de entrada tras el login. Muestra la navegación lateral (Dashboard, Intervenciones, Inspecciones, Auditoría), los accesos a Perfil y Usuarios, el estado del entorno de demostración y el cierre de sesión. |
 
 **Intervenciones**
 
-| Ruta | Pantalla | Qué permite hacer |
-| :---: | :--- | :--- |
-| `/interventions/` | **Lista de intervenciones** | Consulta de registros con contador, búsqueda rápida por aeronave u orden de trabajo y estado vacío con llamado a la acción. |
-| `/interventions/form/` | **Nueva intervención** | Alta de una intervención con validación campo a campo y mensajes de error: aeronave, componente, orden de trabajo, fecha y hora del trabajo y descripción del trabajo realizado. |
+|           Ruta           | Pantalla                    | Qué permite hacer                                                                                                                                                                                                                                                                                                     |
+| :----------------------: | :-------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|    `/interventions/`     | **Lista de intervenciones** | Consulta de registros con contador, búsqueda rápida por aeronave u orden de trabajo y estado vacío con llamado a la acción.                                                                                                                                                                                           |
+|  `/interventions/form/`  | **Nueva intervención**      | Alta de una intervención con validación campo a campo y mensajes de error: aeronave, componente, orden de trabajo, fecha y hora del trabajo y descripción del trabajo realizado.                                                                                                                                      |
 | `/interventions/detail/` | **Detalle de intervención** | Resumen completo (aeronave, componente, orden, fecha, responsable, descripción), badge de estado, carga y consulta de **evidencias** (imágenes o PDF, hasta 1.5 MB por archivo), actualización del avance, notas de revisión y el panel **Referencia verificable**, que muestra el estado de integración con Stellar. |
 
 **Validación**
 
-| Ruta | Pantalla | Qué permite hacer |
-| :---: | :--- | :--- |
-| `/inspections/` | **Revisión de inspección** | Cola de inspección con contadores de pendientes, aprobadas y observadas; panel de revisión con checklist de cumplimiento, decisión explícita (aprobado, rechazado o con observaciones) y registro de observaciones. |
-| `/return-to-service/` | **Aprobación de retorno al servicio** | Lista de intervenciones elegibles, validación previa de que la ejecución, la evidencia y la inspección estén completas, y decisión de liberación con notas. |
+|         Ruta          | Pantalla                              | Qué permite hacer                                                                                                                                                                                                   |
+| :-------------------: | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|    `/inspections/`    | **Revisión de inspección**            | Cola de inspección con contadores de pendientes, aprobadas y observadas; panel de revisión con checklist de cumplimiento, decisión explícita (aprobado, rechazado o con observaciones) y registro de observaciones. |
+| `/return-to-service/` | **Aprobación de retorno al servicio** | Lista de intervenciones elegibles, validación previa de que la ejecución, la evidencia y la inspección estén completas, y decisión de liberación con notas.                                                         |
 
 **Auditoría**
 
-| Ruta | Pantalla | Qué permite hacer |
-| :---: | :--- | :--- |
+|   Ruta    | Pantalla                   | Qué permite hacer                                                                                                                                                                           |
+| :-------: | :------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `/audit/` | **Historial de auditoría** | Línea de tiempo de eventos con búsqueda, filtro por tipo (intervenciones, inspecciones, aprobaciones), responsables y fechas. Incluye el distintivo **"Stellar pendiente de integración"**. |
 
 **Cuenta y administración**
 
-| Ruta | Pantalla | Qué permite hacer |
-| :---: | :--- | :--- |
-| `/profile/` | **Perfil y configuración** | Edición de datos personales, preferencias de uso y estado de la cuenta. |
-| `/admin/users/` | **Usuarios y permisos** | Lista de usuarios registrados con contador y alta de usuarios con rol. |
+|      Ruta       | Pantalla                   | Qué permite hacer                                                       |
+| :-------------: | :------------------------- | :---------------------------------------------------------------------- |
+|   `/profile/`   | **Perfil y configuración** | Edición de datos personales, preferencias de uso y estado de la cuenta. |
+| `/admin/users/` | **Usuarios y permisos**    | Lista de usuarios registrados con contador y alta de usuarios con rol.  |
 
 **Elementos transversales:** las pantallas autenticadas comparten el mismo layout —sidebar con las cuatro secciones del flujo, breadcrumb, avatar y correo de la cuenta activa, accesos a Perfil y Usuarios, y cierre de sesión—. La sesión de demostración se maneja con `sessionStorage` y los registros se conservan en `localStorage` como simulación de persistencia.
 
 ### 1.3 Mapeo con el MVP del Product Blueprint
 
-| Pantalla implementada | Historia / paso del Blueprint |
-| :--- | :--- |
-| Inicio de sesión · Recuperar acceso | Paso 1 del flujo: autenticación y control de acceso (pantalla de autenticación y manejo de sesión). |
-| Dashboard | Paso 3: acceso rápido a intervenciones, inspecciones y aprobaciones (objetivo 6.2 del AGENTS.md). |
-| Nueva intervención | Historia 1: registrar una intervención asociada a identidad, fecha, aeronave, componente, orden de trabajo y trabajo ejecutado. |
-| Lista de intervenciones | Historia 2: consultar en un solo lugar el historial de intervenciones. |
-| Detalle de intervención y evidencia | Historias 1 y 2: consultar la intervención con su evidencia, responsable y resultado registrado (objetivo 6.5). |
-| Revisión de inspección | Historia 4: revisar la evidencia y registrar el resultado de la inspección. |
-| Aprobación de retorno al servicio | Historia 6: verificar que ejecución, evidencia e inspecciones estén completas antes de aprobar la liberación. |
-| Historial de auditoría | Historias 3 y 5: quién realizó cada actividad, cuándo se registró, integridad y secuencia de los registros. |
-| Perfil · Usuarios y permisos | Administración de usuarios, roles y accesos (objetivo 6.9). |
+| Pantalla implementada               | Historia / paso del Blueprint                                                                                                   |
+| :---------------------------------- | :------------------------------------------------------------------------------------------------------------------------------ |
+| Inicio de sesión · Recuperar acceso | Paso 1 del flujo: autenticación y control de acceso (pantalla de autenticación y manejo de sesión).                             |
+| Dashboard                           | Paso 3: acceso rápido a intervenciones, inspecciones y aprobaciones (objetivo 6.2 del AGENTS.md).                               |
+| Nueva intervención                  | Historia 1: registrar una intervención asociada a identidad, fecha, aeronave, componente, orden de trabajo y trabajo ejecutado. |
+| Lista de intervenciones             | Historia 2: consultar en un solo lugar el historial de intervenciones.                                                          |
+| Detalle de intervención y evidencia | Historias 1 y 2: consultar la intervención con su evidencia, responsable y resultado registrado (objetivo 6.5).                 |
+| Revisión de inspección              | Historia 4: revisar la evidencia y registrar el resultado de la inspección.                                                     |
+| Aprobación de retorno al servicio   | Historia 6: verificar que ejecución, evidencia e inspecciones estén completas antes de aprobar la liberación.                   |
+| Historial de auditoría              | Historias 3 y 5: quién realizó cada actividad, cuándo se registró, integridad y secuencia de los registros.                     |
+| Perfil · Usuarios y permisos        | Administración de usuarios, roles y accesos (objetivo 6.9).                                                                     |
 
 ### 1.4 Recorrido del flujo en el front
 
@@ -83,27 +83,20 @@ El flujo principal del MVP se puede recorrer completo en la interfaz: la persona
 
 ### 1.5 Capturas y enlace al front
 
-> **Front hosteado:** _[PENDIENTE — pegar enlace de Vercel]_
+> **Front hosteado:** [https://tracium-blockchain.vercel.app/](https://tracium-blockchain.vercel.app/)
 >
 > ⚠️ Si el proyecto está hospedado, este enlace debe colocarse en el campo **Website** de Apex dentro del proyecto creado.
 
-<!-- PENDIENTE: captura tomada por el equipo -->
-![Captura — Inicio de sesión](../../frontend/assets/capturas/login.png)
+![Captura — Inicio de sesión](./images/login.png)
 
-<!-- PENDIENTE: captura tomada por el equipo -->
-![Captura — Lista de intervenciones](../../frontend/assets/capturas/intervenciones.png)
+![Captura — Lista de intervenciones](./images/lista-intervenciones.png)
 
-<!-- PENDIENTE: captura tomada por el equipo -->
-![Captura — Detalle de intervención con evidencia](../../frontend/assets/capturas/detalle-evidencia.png)
+![Captura — Detalle de intervención con evidencia](./images/detalle-intervenciones.png)
+![Captura — Revisión de inspección](./images/inspeccion.png)
 
-<!-- PENDIENTE: captura tomada por el equipo -->
-![Captura — Revisión de inspección](../../frontend/assets/capturas/inspecciones.png)
+![Captura — Aprobación de retorno al servicio](./images/inspeccion-aprobacion-servicio.png)
 
-<!-- PENDIENTE: captura tomada por el equipo -->
-![Captura — Aprobación de retorno al servicio](../../frontend/assets/capturas/retorno-al-servicio.png)
-
-<!-- PENDIENTE: captura tomada por el equipo -->
-![Captura — Historial de auditoría](../../frontend/assets/capturas/auditoria.png)
+![Captura — Historial de auditoría](./images/auditoria.png)
 
 ### 1.6 Qué no está conectado todavía
 
@@ -130,7 +123,7 @@ Los detalles de la intervención, la evidencia y los archivos permanecen **fuera
 
 La decisión se apoya en el uso de Stellar del Product Blueprint (sección 8): el criterio de pertinencia exige que varias organizaciones independientes —operadores, organizaciones de mantenimiento y centros de servicio— compartan y validen un mismo historial sin depender de un custodio central, y que se conserve la secuencia de intervenciones, inspecciones, aprobaciones y correcciones para identificar modificaciones posteriores.
 
-El Blueprint además establece que los contratos inteligentes permiten *"aplicar reglas para registrar eventos, validar autorizaciones y relacionar correcciones con registros anteriores"*, ejecutando las reglas compartidas de forma consistente en lugar de depender de la lógica interna de un solo participante. Esa responsabilidad no puede depender solo del backend.
+El Blueprint además establece que los contratos inteligentes permiten _"aplicar reglas para registrar eventos, validar autorizaciones y relacionar correcciones con registros anteriores"_, ejecutando las reglas compartidas de forma consistente en lugar de depender de la lógica interna de un solo participante. Esa responsabilidad no puede depender solo del backend.
 
 ### Trabajo previo: qué existe en la red
 
@@ -146,10 +139,10 @@ Las piezas complementarias del ecosistema (Stellar SDK y RPC, cuentas y firmas) 
 
 ## 3. Participación del equipo
 
-| Integrante | Usuario de GitHub | Aporte en esta entrega |
-| :--- | :--- | :--- |
+| Integrante         | Usuario de GitHub                               | Aporte en esta entrega                                                                                                                                                                         |
+| :----------------- | :---------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Abdul Ruiz Saldaña | [`darienabdul`](https://github.com/darienabdul) | Construcción de las pantallas restantes del flujo (detalle de intervención y evidencia, inspección, aprobación del retorno al servicio e historial de auditoría) y avance de la documentación. |
-| Diego Rubio | [`drubio35`](https://github.com/drubio35) | README del repositorio, línea base del frontend en `frontend/AGENTS.md` y las tres pantallas iniciales (inicio de sesión, dashboard e intervenciones). |
+| Diego Rubio        | [`drubio35`](https://github.com/drubio35)       | README del repositorio, línea base del frontend en `frontend/AGENTS.md` y las tres pantallas iniciales (inicio de sesión, dashboard e intervenciones).                                         |
 
 ---
 
@@ -162,4 +155,3 @@ Las piezas complementarias del ecosistema (Stellar SDK y RPC, cuentas y firmas) 
 1. Conectar el front con un backend y una base de datos para reemplazar la persistencia local y la sesión de demostración.
 2. Implementar autenticación real y validación de roles en servidor, de modo que los permisos no dependan de ocultar controles en la interfaz.
 3. En la semana siguiente, implementar el contrato propio definido en la sección 2 sobre la red de testnet y mostrar la referencia verificable en el detalle de la intervención y en el historial de auditoría.
-4. Publicar el front en Vercel y registrar el enlace en Apex.
