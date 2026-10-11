@@ -66,6 +66,16 @@ import AccountMenu from "../../components/AccountMenu.astro";
                   <p class="field-error" id="component-error" aria-live="polite"></p>
                 </div>
                 <div class="field">
+                  <label for="serial-number">Serial number <span aria-hidden="true">*</span></label>
+                  <input id="serial-number" name="serialNumber" type="text" placeholder="Ej. SN-ML-004281" maxlength="80" required autocomplete="off" />
+                  <p class="field-error" id="serial-number-error" aria-live="polite"></p>
+                </div>
+                <div class="field">
+                  <label for="part-number">Part number <span aria-hidden="true">*</span></label>
+                  <input id="part-number" name="partNumber" type="text" placeholder="Ej. P/N 65-00-1234" maxlength="80" required autocomplete="off" />
+                  <p class="field-error" id="part-number-error" aria-live="polite"></p>
+                </div>
+                <div class="field">
                   <label for="work-order">Orden de trabajo <span aria-hidden="true">*</span></label>
                   <input id="work-order" name="workOrder" type="text" placeholder="Ej. OT-2026-0042" maxlength="60" required autocomplete="off" />
                   <p class="field-error" id="work-order-error" aria-live="polite"></p>
@@ -113,6 +123,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
     id: string;
     aircraft: string;
     component: string;
+    serialNumber?: string;
+    partNumber?: string;
     workOrder: string;
     performedAt: string;
     description: string;
@@ -202,6 +214,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
 
     const aircraftInput = document.querySelector<HTMLInputElement>("#aircraft");
     const componentInput = document.querySelector<HTMLInputElement>("#component");
+    const serialNumberInput = document.querySelector<HTMLInputElement>("#serial-number");
+    const partNumberInput = document.querySelector<HTMLInputElement>("#part-number");
     const workOrderInput = document.querySelector<HTMLInputElement>("#work-order");
     const performedAtInput = document.querySelector<HTMLInputElement>("#performed-at");
     const descriptionInput = document.querySelector<HTMLTextAreaElement>("#description");
@@ -209,6 +223,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
     if (record) {
       if (aircraftInput) aircraftInput.value = record.aircraft;
       if (componentInput) componentInput.value = record.component;
+      if (serialNumberInput) serialNumberInput.value = record.serialNumber ?? "";
+      if (partNumberInput) partNumberInput.value = record.partNumber ?? "";
       if (workOrderInput) workOrderInput.value = record.workOrder;
       if (performedAtInput) performedAtInput.value = toLocalDateTime(record.performedAt);
       if (descriptionInput) descriptionInput.value = record.description;
@@ -227,6 +243,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
       event.preventDefault();
       const aircraft = aircraftInput?.value.trim() ?? "";
       const component = componentInput?.value.trim() ?? "";
+      const serialNumber = serialNumberInput?.value.trim() ?? "";
+      const partNumber = partNumberInput?.value.trim() ?? "";
       const workOrder = workOrderInput?.value.trim() ?? "";
       const performedAtValue = performedAtInput?.value ?? "";
       const description = descriptionInput?.value.trim() ?? "";
@@ -234,6 +252,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
       const valid = [
         setError(aircraftInput, "#aircraft-error", aircraft ? "" : "Ingresa la aeronave."),
         setError(componentInput, "#component-error", component ? "" : "Ingresa el componente."),
+        setError(serialNumberInput, "#serial-number-error", serialNumber ? "" : "Ingresa el serial number."),
+        setError(partNumberInput, "#part-number-error", partNumber ? "" : "Ingresa el part number."),
         setError(workOrderInput, "#work-order-error", workOrder ? "" : "Ingresa la orden de trabajo."),
         setError(performedAtInput, "#performed-at-error", Number.isNaN(performedAt.getTime()) ? "Ingresa una fecha y hora válidas." : ""),
         setError(descriptionInput, "#description-error", description ? "" : "Describe el trabajo realizado."),
@@ -246,10 +266,10 @@ import AccountMenu from "../../components/AccountMenu.astro";
 
       const now = new Date().toISOString();
       const nextRecord: Intervention = record
-        ? { ...record, aircraft, component, workOrder, performedAt: performedAt.toISOString(), description }
+        ? { ...record, aircraft, component, serialNumber, partNumber, workOrder, performedAt: performedAt.toISOString(), description }
         : {
             id: `INT-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
-            aircraft, component, workOrder, performedAt: performedAt.toISOString(), description,
+            aircraft, component, serialNumber, partNumber, workOrder, performedAt: performedAt.toISOString(), description,
             createdAt: now, createdBy: currentUser,
           };
       const nextRecords = record ? records.map((item) => item.id === record.id ? nextRecord : item) : [nextRecord, ...records];

@@ -200,6 +200,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
     id: string;
     aircraft: string;
     component: string;
+    serialNumber?: string;
+    partNumber?: string;
     workOrder: string;
     performedAt: string;
     description: string;
@@ -347,6 +349,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
           record.id,
           record.aircraft,
           record.component,
+          record.serialNumber ?? "",
+          record.partNumber ?? "",
           record.workOrder,
           record.description,
           record.createdBy,
@@ -374,7 +378,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
       aircraft.textContent = record.aircraft;
       const component = document.createElement("p");
       component.className = "component-name";
-      component.textContent = record.component;
+      component.textContent = `${record.component} · P/N ${record.partNumber || "—"} · S/N ${record.serialNumber || "—"}`;
       identity.append(aircraft, component);
 
       const badge = document.createElement("span");

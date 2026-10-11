@@ -44,7 +44,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
 </html>
 
 <script>
-  type Intervention = { id: string; aircraft: string; component: string; workOrder: string; performedAt: string; description: string; createdAt: string; createdBy: string };
+  type Intervention = { id: string; aircraft: string; component: string; serialNumber?: string; partNumber?: string; workOrder: string; performedAt: string; description: string; createdAt: string; createdBy: string };
   type Inspection = { decision: "approved" | "observations" | "rejected"; checks: boolean[]; observations: string; inspector: string; updatedAt: string };
   type Details = { status?: string; notes?: string; evidence?: unknown[]; events?: Array<{ id: string; label: string; detail: string; createdAt: string }> };
   const sessionKey = "tracium-demo-user";
@@ -73,13 +73,13 @@ import AccountMenu from "../../components/AccountMenu.astro";
       if (!inspection) pending++; else if (inspection.decision === "approved") approved++; else if (inspection.decision === "observations") observed++;
       const item = document.createElement("button"); item.type = "button"; item.className = `record-row${selected?.id === record.id ? " selected" : ""}`; item.dataset.id = record.id;
       const title = document.createElement("strong"); title.textContent = `${record.aircraft} · ${record.component}`;
-      const meta = document.createElement("span"); meta.textContent = `${record.workOrder} · ${inspection ? inspection.decision === "approved" ? "Aprobada" : inspection.decision === "rejected" ? "Rechazada" : "Con observaciones" : "Pendiente"}`;
+      const meta = document.createElement("span"); meta.textContent = `${record.workOrder} · P/N ${record.partNumber || "—"} · S/N ${record.serialNumber || "—"} · ${inspection ? inspection.decision === "approved" ? "Aprobada" : inspection.decision === "rejected" ? "Rechazada" : "Con observaciones" : "Pendiente"}`;
       item.append(title, meta); list.append(item);
     }
     document.querySelector("#pending-count")!.textContent = String(pending); document.querySelector("#approved-count")!.textContent = String(approved); document.querySelector("#observed-count")!.textContent = String(observed); document.querySelector("#record-count")!.textContent = `${records.length} ${records.length === 1 ? "registro" : "registros"}`; if (empty) empty.hidden = records.length > 0;
   }
   function openReview(record: Intervention): void {
-    selected = record; if (!panel) return; panel.hidden = false; document.querySelector("#review-title")!.textContent = `${record.aircraft} · ${record.workOrder}`; document.querySelector("#selected-meta")!.textContent = `${record.component} · Registrada por ${record.createdBy}`;
+    selected = record; if (!panel) return; panel.hidden = false; document.querySelector("#review-title")!.textContent = `${record.aircraft} · ${record.workOrder}`; document.querySelector("#selected-meta")!.textContent = `${record.component} · P/N ${record.partNumber || "—"} · S/N ${record.serialNumber || "—"} · Registrada por ${record.createdBy}`;
     const existing = inspections[record.id]; const checklist = document.querySelector<HTMLDivElement>("#checklist")!; checklist.replaceChildren();
     selectedChecks.forEach((label, index) => { const wrapper = document.createElement("label"); wrapper.className = "check-item"; const input = document.createElement("input"); input.type = "checkbox"; input.checked = existing?.checks[index] ?? false; input.dataset.check = String(index); const text = document.createElement("span"); text.textContent = label; wrapper.append(input, text); checklist.append(wrapper); });
     (document.querySelector<HTMLSelectElement>("#decision")!).value = existing?.decision ?? "approved"; (document.querySelector<HTMLTextAreaElement>("#observations")!).value = existing?.observations ?? ""; render();

@@ -88,6 +88,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
                 <dl class="details-list">
                   <div><dt>Aeronave</dt><dd id="aircraft"></dd></div>
                   <div><dt>Componente</dt><dd id="component"></dd></div>
+                  <div><dt>Serial number</dt><dd id="serial-number"></dd></div>
+                  <div><dt>Part number</dt><dd id="part-number"></dd></div>
                   <div><dt>Orden de trabajo</dt><dd id="work-order"></dd></div>
                   <div><dt>Trabajo realizado</dt><dd id="performed-at"></dd></div>
                   <div><dt>Registrada por</dt><dd id="created-by"></dd></div>
@@ -180,6 +182,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
     id: string;
     aircraft: string;
     component: string;
+    serialNumber?: string;
+    partNumber?: string;
     workOrder: string;
     performedAt: string;
     description: string;
@@ -331,6 +335,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
     setText("#record-id", `ID ${record.id}`);
     setText("#aircraft", record.aircraft);
     setText("#component", record.component);
+    setText("#serial-number", record.serialNumber || "No registrado");
+    setText("#part-number", record.partNumber || "No registrado");
     setText("#work-order", record.workOrder);
     setText("#performed-at", formatDate(record.performedAt));
     setText("#created-by", record.createdBy);
