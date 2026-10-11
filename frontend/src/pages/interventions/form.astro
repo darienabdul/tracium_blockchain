@@ -1,0 +1,365 @@
+---
+const logoPath = "/logos/logo-background-black-tracium.png";
+import AccountMenu from "../../components/AccountMenu.astro";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content="#23103e" />
+    <meta name="description" content="Registra o edita una intervención de mantenimiento en Tracium." />
+    <title>Registro de intervención | Tracium</title>
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <a class="brand" href="/dashboard/" aria-label="Tracium, inicio">
+          <img src={logoPath} alt="Tracium" />
+        </a>
+        <p class="nav-heading">ESPACIO DE TRABAJO</p>
+        <nav aria-label="Menú principal">
+          <a class="nav-item" href="/dashboard/"><span class="nav-icon" aria-hidden="true">⌂</span>Dashboard</a>
+          <a class="nav-item active" href="/interventions/" aria-current="page"><span class="nav-icon" aria-hidden="true">▤</span>Intervenciones</a>
+          <a class="nav-item" href="/inspections/"><span class="nav-icon" aria-hidden="true">✓</span>Inspecciones</a>
+          <a class="nav-item" href="/audit/"><span class="nav-icon" aria-hidden="true">◷</span>Auditoría</a>
+        </nav>
+        <div class="sidebar-footer"><span class="status-dot" aria-hidden="true"></span>Entorno de demostración</div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div class="breadcrumb"><a href="/dashboard/">Workspace</a><span aria-hidden="true">/</span><a href="/interventions/">Intervenciones</a><span aria-hidden="true">/</span><span id="breadcrumb-label">Nuevo registro</span></div>
+          <AccountMenu />
+        </header>
+
+        <section class="page-content" aria-labelledby="page-title">
+          <a class="back-link" id="back-link" href="/interventions/">← Volver a intervenciones</a>
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow" id="page-eyebrow">REGISTRO DE MANTENIMIENTO</p>
+              <h1 id="page-title">Nueva intervención</h1>
+              <p class="intro" id="page-intro">Registra el trabajo realizado para iniciar su trazabilidad.</p>
+            </div>
+          </div>
+
+          <form class="record-form" id="record-form" novalidate>
+            <section class="panel" aria-labelledby="work-title">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">INFORMACIÓN OPERATIVA</p>
+                  <h2 id="work-title">Datos de la intervención</h2>
+                </div>
+                <span class="required-note">* Campos obligatorios</span>
+              </div>
+
+              <div class="form-grid">
+                <div class="field">
+                  <label for="aircraft">Aeronave <span aria-hidden="true">*</span></label>
+                  <input id="aircraft" name="aircraft" type="text" placeholder="Ej. N123AB" maxlength="40" required autocomplete="off" />
+                  <p class="field-error" id="aircraft-error" aria-live="polite"></p>
+                </div>
+                <div class="field">
+                  <label for="component">Componente <span aria-hidden="true">*</span></label>
+                  <input id="component" name="component" type="text" placeholder="Ej. Motor izquierdo" maxlength="100" required autocomplete="off" />
+                  <p class="field-error" id="component-error" aria-live="polite"></p>
+                </div>
+                <div class="field">
+                  <label for="work-order">Orden de trabajo <span aria-hidden="true">*</span></label>
+                  <input id="work-order" name="workOrder" type="text" placeholder="Ej. OT-2026-0042" maxlength="60" required autocomplete="off" />
+                  <p class="field-error" id="work-order-error" aria-live="polite"></p>
+                </div>
+                <div class="field">
+                  <label for="performed-at">Fecha y hora del trabajo <span aria-hidden="true">*</span></label>
+                  <input id="performed-at" name="performedAt" type="datetime-local" required />
+                  <p class="field-error" id="performed-at-error" aria-live="polite"></p>
+                </div>
+                <div class="field full-width">
+                  <label for="description">Trabajo realizado <span aria-hidden="true">*</span></label>
+                  <textarea id="description" name="description" rows="7" maxlength="1200" placeholder="Describe brevemente el trabajo de mantenimiento ejecutado." required></textarea>
+                  <p class="field-hint">Describe las tareas realizadas, los resultados obtenidos y cualquier condición relevante.</p>
+                  <p class="field-error" id="description-error" aria-live="polite"></p>
+                </div>
+              </div>
+            </section>
+
+            <section class="info-panel" aria-label="Trazabilidad del registro">
+              <div class="info-icon" aria-hidden="true">i</div>
+              <p><strong>Registro local del blueprint.</strong> El usuario y la fecha de creación se asociarán automáticamente. Después de guardar podrás agregar evidencias, observaciones y actualizar el estado desde el detalle.</p>
+            </section>
+
+            <p class="form-status" id="form-status" role="alert" aria-live="polite"></p>
+            <div class="form-actions">
+              <a class="cancel-button" id="cancel-button" href="/interventions/">Cancelar</a>
+              <button class="primary-button" type="submit" id="submit-button">Guardar intervención</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="not-found" id="not-found" hidden aria-labelledby="not-found-title">
+          <p class="eyebrow">REGISTRO NO DISPONIBLE</p>
+          <h1 id="not-found-title">No encontramos la intervención que quieres editar</h1>
+          <p>El registro puede haber sido eliminado o el enlace ya no es válido.</p>
+          <a class="primary-button link-button" href="/interventions/">Volver a intervenciones</a>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+
+<script>
+  type Intervention = {
+    id: string;
+    aircraft: string;
+    component: string;
+    workOrder: string;
+    performedAt: string;
+    description: string;
+    createdAt: string;
+    createdBy: string;
+  };
+
+  type TimelineEvent = { id: string; label: string; detail: string; createdAt: string };
+  type DetailState = { status?: string; notes?: string; evidence?: unknown[]; events?: TimelineEvent[] };
+
+  const sessionKey = "tracium-demo-user";
+  const interventionsKey = "tracium-interventions-v1";
+  const detailsKey = "tracium-intervention-details-v1";
+  const currentUser = localStorage.getItem(sessionKey);
+  const params = new URLSearchParams(window.location.search);
+  const editId = params.get("id");
+
+  if (!currentUser) window.location.replace("/");
+
+  const form = document.querySelector<HTMLFormElement>("#record-form");
+  const emailLabel = document.querySelector<HTMLSpanElement>("#account-email");
+  const logoutButton = document.querySelector<HTMLButtonElement>("#logout-button");
+  const status = document.querySelector<HTMLParagraphElement>("#form-status");
+  const notFound = document.querySelector<HTMLElement>("#not-found");
+  const pageContent = document.querySelector<HTMLElement>(".page-content");
+  const submitButton = document.querySelector<HTMLButtonElement>("#submit-button");
+  const cancelButton = document.querySelector<HTMLAnchorElement>("#cancel-button");
+  const backLink = document.querySelector<HTMLAnchorElement>("#back-link");
+
+  if (emailLabel && currentUser) emailLabel.textContent = currentUser;
+  logoutButton?.addEventListener("click", () => {
+    localStorage.removeItem(sessionKey);
+    window.location.replace("/");
+  });
+
+  function isIntervention(value: unknown): value is Intervention {
+    if (typeof value !== "object" || value === null) return false;
+    const record = value as Record<string, unknown>;
+    return ["id", "aircraft", "component", "workOrder", "performedAt", "description", "createdAt", "createdBy"]
+      .every((key) => typeof record[key] === "string");
+  }
+
+  function readRecords(): Intervention[] {
+    try {
+      const value: unknown = JSON.parse(localStorage.getItem(interventionsKey) ?? "[]");
+      return Array.isArray(value) ? value.filter(isIntervention) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function readDetails(): Record<string, DetailState> {
+    try {
+      const value: unknown = JSON.parse(localStorage.getItem(detailsKey) ?? "{}");
+      return typeof value === "object" && value !== null ? value as Record<string, DetailState> : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function toLocalDateTime(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+  }
+
+  const records = readRecords();
+  const record = editId ? records.find((item) => item.id === editId) : undefined;
+
+  if (editId && !record) {
+    if (pageContent) pageContent.hidden = true;
+    if (notFound) notFound.hidden = false;
+  } else if (form) {
+    const title = document.querySelector<HTMLElement>("#page-title");
+    const eyebrow = document.querySelector<HTMLElement>("#page-eyebrow");
+    const intro = document.querySelector<HTMLElement>("#page-intro");
+    const breadcrumb = document.querySelector<HTMLElement>("#breadcrumb-label");
+    if (record) {
+      if (title) title.textContent = "Editar intervención";
+      if (eyebrow) eyebrow.textContent = "EDICIÓN DE MANTENIMIENTO";
+      if (intro) intro.textContent = `Actualiza los datos de ${record.aircraft} · ${record.workOrder}.`;
+      if (breadcrumb) breadcrumb.textContent = "Editar registro";
+      if (submitButton) submitButton.textContent = "Guardar cambios";
+      if (cancelButton) cancelButton.href = `/interventions/detail/?id=${encodeURIComponent(record.id)}`;
+      if (backLink) backLink.href = `/interventions/detail/?id=${encodeURIComponent(record.id)}`;
+    }
+
+    const aircraftInput = document.querySelector<HTMLInputElement>("#aircraft");
+    const componentInput = document.querySelector<HTMLInputElement>("#component");
+    const workOrderInput = document.querySelector<HTMLInputElement>("#work-order");
+    const performedAtInput = document.querySelector<HTMLInputElement>("#performed-at");
+    const descriptionInput = document.querySelector<HTMLTextAreaElement>("#description");
+
+    if (record) {
+      if (aircraftInput) aircraftInput.value = record.aircraft;
+      if (componentInput) componentInput.value = record.component;
+      if (workOrderInput) workOrderInput.value = record.workOrder;
+      if (performedAtInput) performedAtInput.value = toLocalDateTime(record.performedAt);
+      if (descriptionInput) descriptionInput.value = record.description;
+    } else if (performedAtInput) {
+      performedAtInput.value = toLocalDateTime(new Date().toISOString());
+    }
+
+    function setError(input: HTMLInputElement | HTMLTextAreaElement | null, selector: string, message: string): boolean {
+      const error = document.querySelector<HTMLParagraphElement>(selector);
+      if (error) error.textContent = message;
+      if (input) input.setAttribute("aria-invalid", String(Boolean(message)));
+      return !message;
+    }
+
+    form.addEventListener("submit", (event: SubmitEvent) => {
+      event.preventDefault();
+      const aircraft = aircraftInput?.value.trim() ?? "";
+      const component = componentInput?.value.trim() ?? "";
+      const workOrder = workOrderInput?.value.trim() ?? "";
+      const performedAtValue = performedAtInput?.value ?? "";
+      const description = descriptionInput?.value.trim() ?? "";
+      const performedAt = new Date(performedAtValue);
+      const valid = [
+        setError(aircraftInput, "#aircraft-error", aircraft ? "" : "Ingresa la aeronave."),
+        setError(componentInput, "#component-error", component ? "" : "Ingresa el componente."),
+        setError(workOrderInput, "#work-order-error", workOrder ? "" : "Ingresa la orden de trabajo."),
+        setError(performedAtInput, "#performed-at-error", Number.isNaN(performedAt.getTime()) ? "Ingresa una fecha y hora válidas." : ""),
+        setError(descriptionInput, "#description-error", description ? "" : "Describe el trabajo realizado."),
+      ].every(Boolean);
+
+      if (!valid || !currentUser) {
+        if (status) status.textContent = "Completa los campos obligatorios para continuar.";
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const nextRecord: Intervention = record
+        ? { ...record, aircraft, component, workOrder, performedAt: performedAt.toISOString(), description }
+        : {
+            id: `INT-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+            aircraft, component, workOrder, performedAt: performedAt.toISOString(), description,
+            createdAt: now, createdBy: currentUser,
+          };
+      const nextRecords = record ? records.map((item) => item.id === record.id ? nextRecord : item) : [nextRecord, ...records];
+
+      try {
+        localStorage.setItem(interventionsKey, JSON.stringify(nextRecords));
+        if (record) {
+          const details = readDetails();
+          const currentDetails = details[record.id] ?? { status: "registered", notes: "", evidence: [], events: [] };
+          currentDetails.events = Array.isArray(currentDetails.events) ? currentDetails.events : [];
+          currentDetails.events.push({
+            id: crypto.randomUUID(),
+            label: "Intervención actualizada",
+            detail: `Datos editados por ${currentUser}`,
+            createdAt: now,
+          });
+          details[record.id] = currentDetails;
+          localStorage.setItem(detailsKey, JSON.stringify(details));
+        }
+        window.location.assign(`/interventions/detail/?id=${encodeURIComponent(nextRecord.id)}`);
+      } catch {
+        if (status) status.textContent = "No se pudo guardar el registro en este navegador. Revisa el almacenamiento disponible.";
+      }
+    });
+  }
+</script>
+
+<style>
+  :global(*) { box-sizing: border-box; }
+  :global(body) { min-width: 320px; min-height: 100vh; margin: 0; color: #211b2e; background: #f6f5f8; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  :global(button), :global(input), :global(textarea) { font: inherit; }
+  .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 1; display: flex; width: 254px; flex-direction: column; padding: 29px 17px 20px; border-right: 1px solid #49365c; background: linear-gradient(180deg, #2e2d4f 0%, #23103e 58%, #351070 100%); }
+  .brand { display: block; width: 184px; margin: 2px 0 49px 8px; }
+  .brand img { display: block; width: 100%; height: auto; }
+  .nav-heading, .eyebrow { color: #d1c5df; font-size: .68rem; font-weight: 750; letter-spacing: .13em; }
+  .nav-heading { margin: 0 11px 12px; }
+  nav { display: grid; gap: 5px; }
+  .nav-item { display: flex; min-height: 44px; align-items: center; gap: 12px; padding: 0 11px; border-radius: 8px; color: #eee8f5; font-size: .87rem; font-weight: 550; text-decoration: none; }
+  .nav-item.active { border-left: 3px solid #b249f1; color: #fff; background: rgb(178 73 241 / 19%); font-weight: 700; }
+  .nav-item.disabled { color: #c1b8ce; cursor: default; }
+  .nav-icon { display: grid; width: 21px; place-items: center; font-size: 1.12rem; }
+  .sidebar-footer { display: flex; align-items: center; gap: 9px; margin-top: auto; padding: 15px 8px 2px; border-top: 1px solid rgb(255 255 255 / 18%); color: #ded5e8; font-size: .73rem; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #05b179; }
+  .main-area { min-height: 100vh; margin-left: 254px; }
+  .topbar { display: flex; min-height: 72px; align-items: center; justify-content: space-between; gap: 16px; padding: 0 clamp(22px, 4vw, 56px); border-bottom: 1px solid #ece9f0; background: rgb(255 255 255 / 86%); }
+  .breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; color: #352e3f; font-size: .82rem; font-weight: 650; }
+  .breadcrumb a { color: #898191; text-decoration: none; }
+  .breadcrumb span { color: #c5becb; }
+  .account { display: flex; align-items: center; gap: 11px; }
+  .account-avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; color: #fff; background: linear-gradient(140deg, #b249f1, #7902ff); font-size: .82rem; font-weight: 700; }
+  .account-email { color: #4c4457; font-size: .8rem; }
+  .logout-button { margin-left: 7px; padding: 8px 11px; border: 1px solid #e8e3ec; border-radius: 7px; color: #62596d; background: #fff; cursor: pointer; font-size: .76rem; font-weight: 600; text-decoration: none; }
+  .page-content { width: min(100%, 950px); margin: 0 auto; padding: clamp(28px, 5vh, 52px) clamp(22px, 4vw, 56px) 70px; }
+  .back-link { display: inline-block; margin-bottom: 24px; color: #60338f; font-size: .8rem; font-weight: 700; text-decoration: none; }
+  .page-heading { margin-bottom: 25px; }
+  .eyebrow { margin: 0 0 10px; color: #7902ff; }
+  h1, h2, p { margin-top: 0; }
+  h1 { margin-bottom: 8px; color: #30263c; font-size: clamp(1.65rem, 3vw, 2.15rem); letter-spacing: -.035em; }
+  h2 { margin-bottom: 0; color: #30263c; font-size: 1.04rem; }
+  .intro { margin-bottom: 0; color: #827b8c; font-size: .88rem; }
+  .panel { padding: 25px; border: 1px solid #ece8f0; border-radius: 10px; background: #fff; box-shadow: 0 3px 12px rgb(35 16 62 / 3%); }
+  .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin-bottom: 25px; }
+  .panel-heading .eyebrow { margin-bottom: 8px; }
+  .required-note { color: #958c9f; font-size: .7rem; }
+  .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 18px; }
+  .field.full-width { grid-column: 1 / -1; }
+  label { display: block; margin-bottom: 7px; color: #51465d; font-size: .76rem; font-weight: 700; }
+  label span { color: #7902ff; }
+  input, textarea { width: 100%; border: 1px solid #ded8e5; border-radius: 7px; color: #40364b; background: #fff; font-size: .82rem; }
+  input { height: 43px; padding: 0 12px; }
+  textarea { padding: 11px 12px; resize: vertical; line-height: 1.55; }
+  input:focus, textarea:focus { outline: 3px solid rgb(121 2 255 / 14%); border-color: #b249f1; }
+  input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: #d35a5a; }
+  .field-hint { margin: 7px 0 0; color: #958c9f; font-size: .7rem; line-height: 1.45; }
+  .field-error { min-height: 17px; margin: 5px 0 0; color: #b23e3e; font-size: .7rem; }
+  .info-panel { display: flex; align-items: flex-start; gap: 11px; margin-top: 15px; padding: 15px 17px; border: 1px solid #e7daf3; border-radius: 9px; color: #705d80; background: #fbf8fe; }
+  .info-panel p { margin: 0; font-size: .75rem; line-height: 1.55; }
+  .info-panel strong { color: #513478; }
+  .info-icon { display: grid; width: 22px; height: 22px; flex: 0 0 auto; place-items: center; border-radius: 50%; color: #fff; background: #b249f1; font-size: .75rem; font-weight: 800; }
+  .form-status { min-height: 20px; margin: 15px 0 0; color: #b23e3e; font-size: .78rem; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+  .primary-button, .cancel-button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; border-radius: 7px; cursor: pointer; font-size: .79rem; font-weight: 700; text-decoration: none; }
+  .primary-button { padding: 0 18px; border: 1px solid #7902ff; color: #fff; background: #7902ff; }
+  .primary-button:hover { background: #6400d9; }
+  .cancel-button { padding: 0 17px; border: 1px solid #ded3ed; color: #60338f; background: #fff; }
+  .not-found { width: min(100%, 600px); margin: 15vh auto; padding: 42px 25px; text-align: center; }
+  .not-found[hidden], .page-content[hidden] { display: none; }
+  .not-found h1 { font-size: 1.55rem; }
+  .not-found p:not(.eyebrow) { color: #827b8c; font-size: .84rem; }
+  .link-button { margin-top: 12px; }
+  @media (max-width: 900px) {
+    .sidebar { position: static; width: auto; min-height: auto; padding: 17px 18px; }
+    .brand { width: 155px; margin: 0 0 18px; }
+    .nav-heading, .sidebar-footer { display: none; }
+    nav { grid-template-columns: repeat(4, 1fr); }
+    .nav-item { justify-content: center; min-height: 38px; padding: 0 7px; font-size: .75rem; }
+    .nav-icon { width: auto; }
+    .main-area { margin-left: 0; }
+  }
+  @media (max-width: 700px) {
+    .topbar { align-items: flex-start; flex-direction: column; padding-top: 15px; padding-bottom: 15px; }
+    .account { width: 100%; }
+    .account-email { flex: 1; }
+    .form-grid { grid-template-columns: 1fr; }
+    .field.full-width { grid-column: auto; }
+  }
+  @media (max-width: 480px) {
+    nav { grid-template-columns: repeat(2, 1fr); }
+    .panel { padding: 18px; }
+    .form-actions { flex-direction: column-reverse; }
+    .primary-button, .cancel-button { width: 100%; }
+  }
+</style>

@@ -1,5 +1,6 @@
 ---
 const logoPath = "/logos/logo-background-black-tracium.png";
+import AccountMenu from "../../components/AccountMenu.astro";
 ---
 
 <!doctype html>
@@ -31,14 +32,14 @@ const logoPath = "/logos/logo-background-black-tracium.png";
             <span class="nav-icon" aria-hidden="true">▤</span>
             Intervenciones
           </a>
-          <span class="nav-item disabled" aria-disabled="true">
+          <a class="nav-item" href="/inspections/">
             <span class="nav-icon" aria-hidden="true">✓</span>
             Inspecciones
-          </span>
-          <span class="nav-item disabled" aria-disabled="true">
+          </a>
+          <a class="nav-item" href="/audit/">
             <span class="nav-icon" aria-hidden="true">◷</span>
             Auditoría
-          </span>
+          </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -52,11 +53,7 @@ const logoPath = "/logos/logo-background-black-tracium.png";
           <div class="breadcrumb">
             <a href="/dashboard/">Workspace</a><span aria-hidden="true">/</span>Intervenciones
           </div>
-          <div class="account">
-            <span class="account-avatar" aria-hidden="true">T</span>
-            <span class="account-email" id="account-email">Cuenta demo</span>
-            <button class="logout-button" id="logout-button" type="button">Cerrar sesión</button>
-          </div>
+          <AccountMenu />
         </header>
 
         <section class="page-content" aria-labelledby="page-title">
@@ -244,7 +241,7 @@ const logoPath = "/logos/logo-background-black-tracium.png";
   const performedAtInput = requireElement<HTMLInputElement>("#performed-at");
   const descriptionInput = requireElement<HTMLTextAreaElement>("#description");
 
-  const currentUser = sessionStorage.getItem(sessionKey);
+  const currentUser = localStorage.getItem(sessionKey);
 
   if (!currentUser) {
     window.location.replace("/");
@@ -253,7 +250,7 @@ const logoPath = "/logos/logo-background-black-tracium.png";
   }
 
   logoutButton.addEventListener("click", () => {
-    sessionStorage.removeItem(sessionKey);
+    localStorage.removeItem(sessionKey);
     window.location.replace("/");
   });
 
@@ -364,8 +361,10 @@ const logoPath = "/logos/logo-background-black-tracium.png";
     listError.textContent = "";
 
     for (const record of filteredRecords) {
-      const card = document.createElement("article");
+      const card = document.createElement("a");
       card.className = "intervention-card";
+      card.href = `/interventions/detail/?id=${encodeURIComponent(record.id)}`;
+      card.setAttribute("aria-label", `Ver detalle de la intervención ${record.id}`);
 
       const header = document.createElement("div");
       header.className = "card-header";
@@ -411,16 +410,9 @@ const logoPath = "/logos/logo-background-black-tracium.png";
   }
 
   function openForm(): void {
-    if (!storageAvailable) {
-      return;
+    if (storageAvailable) {
+      window.location.assign("/interventions/form/");
     }
-
-    const localDate = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
-      .toISOString()
-      .slice(0, 16);
-    performedAtInput.value = localDate;
-    dialog.showModal();
-    aircraftInput.focus();
   }
 
   createButton.addEventListener("click", openForm);
@@ -693,6 +685,7 @@ const logoPath = "/logos/logo-background-black-tracium.png";
     cursor: pointer;
     font-size: 0.76rem;
     font-weight: 600;
+    text-decoration: none;
   }
 
   .logout-button:hover,
@@ -847,10 +840,13 @@ const logoPath = "/logos/logo-background-black-tracium.png";
   }
 
   .intervention-card {
+    display: block;
     padding: 17px 18px 14px;
     border: 1px solid #ece8f0;
     border-radius: 9px;
+    color: inherit;
     background: #fff;
+    text-decoration: none;
     transition: border-color 140ms ease, box-shadow 140ms ease;
   }
 

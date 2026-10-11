@@ -1,0 +1,74 @@
+---
+interface Props { fixed?: boolean }
+const { fixed = false } = Astro.props;
+---
+
+<div class:list={["account-menu", { fixed }]}>
+  <button
+    class="account-trigger"
+    id="account-menu-button"
+    type="button"
+    aria-haspopup="true"
+    aria-expanded="false"
+    aria-controls="account-dropdown"
+  >
+    <span class="account-avatar" aria-hidden="true">T</span>
+    <span class="account-email" id="account-email">Cuenta demo</span>
+    <span class="account-chevron" aria-hidden="true">⌄</span>
+  </button>
+  <div class="account-dropdown" id="account-dropdown" role="menu" hidden>
+    <a href="/profile/" role="menuitem">Perfil</a>
+    <a href="/admin/users/" role="menuitem">Usuarios</a>
+    <span class="dropdown-divider" aria-hidden="true"></span>
+    <button id="logout-button" type="button" role="menuitem">Cerrar sesión</button>
+  </div>
+</div>
+
+<script>
+  const trigger = document.querySelector<HTMLButtonElement>("#account-menu-button");
+  const dropdown = document.querySelector<HTMLDivElement>("#account-dropdown");
+
+  if (trigger && dropdown) {
+    const closeMenu = (): void => {
+      dropdown.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+    };
+
+    trigger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const isOpen = !dropdown.hidden;
+      dropdown.hidden = isOpen;
+      trigger.setAttribute("aria-expanded", String(!isOpen));
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!dropdown.contains(event.target as Node) && event.target !== trigger) closeMenu();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeMenu();
+    });
+  }
+
+  const accountEmail = localStorage.getItem("tracium-demo-user");
+  const emailLabel = document.querySelector<HTMLSpanElement>("#account-email");
+  if (accountEmail && emailLabel) emailLabel.textContent = accountEmail;
+</script>
+
+<style>
+  :global(.account) { display: none !important; }
+  .account-menu { position: relative; }
+  .account-menu.fixed { position: fixed; top: 19px; right: clamp(22px, 4vw, 56px); z-index: 20; }
+  .account-trigger { display: flex; align-items: center; gap: 10px; padding: 4px 7px 4px 4px; border: 1px solid transparent; border-radius: 9px; color: #4c4457; background: transparent; cursor: pointer; }
+  .account-trigger:hover, .account-trigger[aria-expanded="true"] { border-color: #e8e3ec; background: #fff; }
+  .account-trigger:focus-visible { outline: 3px solid rgb(121 2 255 / 22%); outline-offset: 2px; }
+  .account-avatar { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; color: #fff; background: linear-gradient(140deg, #b249f1, #7902ff); font-size: .82rem; font-weight: 700; }
+  .account-email { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; }
+  .account-chevron { margin-left: 1px; color: #8f8598; font-size: 1rem; line-height: 1; }
+  .account-dropdown { position: absolute; top: calc(100% + 9px); right: 0; z-index: 10; display: grid; min-width: 175px; padding: 6px; border: 1px solid #e8e3ec; border-radius: 9px; background: #fff; box-shadow: 0 12px 28px rgb(35 16 62 / 13%); }
+  .account-dropdown[hidden] { display: none; }
+  .account-dropdown a, .account-dropdown button { display: block; width: 100%; padding: 10px 11px; border: 0; border-radius: 6px; color: #4b4056; background: transparent; font-size: .76rem; text-align: left; text-decoration: none; cursor: pointer; }
+  .account-dropdown a:hover, .account-dropdown button:hover { color: #7902ff; background: #f8f3fc; }
+  .dropdown-divider { height: 1px; margin: 5px 4px; background: #f0edf3; }
+  @media (max-width: 760px) { .account-menu.fixed { top: 14px; right: 18px; } .account-email { display: none; } .account-chevron { display: none; } .account-trigger { padding-right: 2px; } .account-dropdown { right: 0; } }
+</style>

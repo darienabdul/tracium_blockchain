@@ -1,0 +1,99 @@
+---
+const logoPath = "/logos/logo-background-black-tracium.png";
+import AccountMenu from "../../components/AccountMenu.astro";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content="#23103e" />
+    <title>Inspecciones | Tracium</title>
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <a class="brand" href="/dashboard/" aria-label="Tracium, inicio"><img src={logoPath} alt="Tracium" /></a>
+        <p class="nav-heading">ESPACIO DE TRABAJO</p>
+        <nav aria-label="Menú principal">
+          <a class="nav-item" href="/dashboard/"><span class="nav-icon">⌂</span>Dashboard</a>
+          <a class="nav-item" href="/interventions/"><span class="nav-icon">▤</span>Intervenciones</a>
+          <a class="nav-item active" href="/inspections/" aria-current="page"><span class="nav-icon">✓</span>Inspecciones</a>
+          <a class="nav-item" href="/audit/"><span class="nav-icon">◷</span>Auditoría</a>
+        </nav>
+        <div class="sidebar-footer"><span class="status-dot"></span>Entorno de demostración</div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div class="breadcrumb"><a href="/dashboard/">Workspace</a><span>/</span>Inspecciones</div>
+          <AccountMenu />
+        </header>
+
+        <section class="page-content" aria-labelledby="page-title">
+          <p class="eyebrow">CONTROL DE CALIDAD</p>
+          <div class="page-heading"><div><h1 id="page-title">Revisión de inspección</h1><p class="intro">Valida la ejecución, la evidencia y el cumplimiento de cada intervención.</p></div><a class="secondary-button" href="/return-to-service/">Retorno al servicio →</a></div>
+          <div class="summary-row"><div class="summary-card"><strong id="pending-count">0</strong><span>Pendientes de revisión</span></div><div class="summary-card"><strong id="approved-count">0</strong><span>Aprobadas</span></div><div class="summary-card"><strong id="observed-count">0</strong><span>Con observaciones</span></div></div>
+          <p class="page-message" id="page-message" role="status" aria-live="polite"></p>
+          <div class="inspection-layout"><section class="panel"><div class="panel-heading"><div><p class="eyebrow">INTERVENCIONES</p><h2>Cola de inspección</h2></div><span class="panel-count" id="record-count">0 registros</span></div><div class="records-list" id="records-list"></div><p class="empty-state" id="empty-state" hidden>No hay intervenciones disponibles para inspección.</p></section><section class="panel review-panel" id="review-panel" hidden aria-labelledby="review-title"><p class="eyebrow">REVISIÓN SELECCIONADA</p><h2 id="review-title">Selecciona una intervención</h2><p class="selected-meta" id="selected-meta"></p><div class="checklist" id="checklist"></div><label for="decision">Resultado de inspección</label><select id="decision"><option value="approved">Aprobado</option><option value="observations">Aprobado con observaciones</option><option value="rejected">Rechazado</option></select><label for="observations">Observaciones</label><textarea id="observations" rows="5" maxlength="1200" placeholder="Registra hallazgos, referencias o acciones requeridas."></textarea><button class="primary-button" id="save-review" type="button">Guardar revisión</button></section></div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+
+<script>
+  type Intervention = { id: string; aircraft: string; component: string; workOrder: string; performedAt: string; description: string; createdAt: string; createdBy: string };
+  type Inspection = { decision: "approved" | "observations" | "rejected"; checks: boolean[]; observations: string; inspector: string; updatedAt: string };
+  type Details = { status?: string; notes?: string; evidence?: unknown[]; events?: Array<{ id: string; label: string; detail: string; createdAt: string }> };
+  const sessionKey = "tracium-demo-user";
+  const currentUser = localStorage.getItem(sessionKey);
+  if (!currentUser) window.location.replace("/");
+  const emailLabel = document.querySelector<HTMLSpanElement>("#account-email");
+  if (emailLabel && currentUser) emailLabel.textContent = currentUser;
+  document.querySelector<HTMLButtonElement>("#logout-button")?.addEventListener("click", () => { localStorage.removeItem(sessionKey); window.location.replace("/"); });
+  function read<T>(key: string, fallback: T): T { try { return JSON.parse(localStorage.getItem(key) ?? JSON.stringify(fallback)) as T; } catch { return fallback; } }
+  const records = read<unknown[]>("tracium-interventions-v1", []).filter((item): item is Intervention => typeof item === "object" && item !== null && ["id", "aircraft", "component", "workOrder", "performedAt", "description", "createdAt", "createdBy"].every((key) => typeof (item as Record<string, unknown>)[key] === "string"));
+  const inspections = read<Record<string, Inspection>>("tracium-inspections-v1", {});
+  const details = read<Record<string, Details>>("tracium-intervention-details-v1", {});
+  const list = document.querySelector<HTMLDivElement>("#records-list");
+  const panel = document.querySelector<HTMLElement>("#review-panel");
+  const empty = document.querySelector<HTMLParagraphElement>("#empty-state");
+  const message = document.querySelector<HTMLParagraphElement>("#page-message");
+  const selectedChecks = ["Trabajo ejecutado coincide con la orden", "Evidencia documental disponible", "Procedimiento técnico verificado", "Resultado registrado correctamente"];
+  let selected: Intervention | undefined;
+  const save = () => localStorage.setItem("tracium-inspections-v1", JSON.stringify(inspections));
+  function render(): void {
+    if (!list) return;
+    list.replaceChildren();
+    let pending = 0; let approved = 0; let observed = 0;
+    for (const record of records) {
+      const inspection = inspections[record.id];
+      if (!inspection) pending++; else if (inspection.decision === "approved") approved++; else if (inspection.decision === "observations") observed++;
+      const item = document.createElement("button"); item.type = "button"; item.className = `record-row${selected?.id === record.id ? " selected" : ""}`; item.dataset.id = record.id;
+      const title = document.createElement("strong"); title.textContent = `${record.aircraft} · ${record.component}`;
+      const meta = document.createElement("span"); meta.textContent = `${record.workOrder} · ${inspection ? inspection.decision === "approved" ? "Aprobada" : inspection.decision === "rejected" ? "Rechazada" : "Con observaciones" : "Pendiente"}`;
+      item.append(title, meta); list.append(item);
+    }
+    document.querySelector("#pending-count")!.textContent = String(pending); document.querySelector("#approved-count")!.textContent = String(approved); document.querySelector("#observed-count")!.textContent = String(observed); document.querySelector("#record-count")!.textContent = `${records.length} ${records.length === 1 ? "registro" : "registros"}`; if (empty) empty.hidden = records.length > 0;
+  }
+  function openReview(record: Intervention): void {
+    selected = record; if (!panel) return; panel.hidden = false; document.querySelector("#review-title")!.textContent = `${record.aircraft} · ${record.workOrder}`; document.querySelector("#selected-meta")!.textContent = `${record.component} · Registrada por ${record.createdBy}`;
+    const existing = inspections[record.id]; const checklist = document.querySelector<HTMLDivElement>("#checklist")!; checklist.replaceChildren();
+    selectedChecks.forEach((label, index) => { const wrapper = document.createElement("label"); wrapper.className = "check-item"; const input = document.createElement("input"); input.type = "checkbox"; input.checked = existing?.checks[index] ?? false; input.dataset.check = String(index); const text = document.createElement("span"); text.textContent = label; wrapper.append(input, text); checklist.append(wrapper); });
+    (document.querySelector<HTMLSelectElement>("#decision")!).value = existing?.decision ?? "approved"; (document.querySelector<HTMLTextAreaElement>("#observations")!).value = existing?.observations ?? ""; render();
+  }
+  list?.addEventListener("click", (event) => { const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-id]"); const record = records.find((item) => item.id === button?.dataset.id); if (record) openReview(record); });
+  document.querySelector<HTMLButtonElement>("#save-review")?.addEventListener("click", () => {
+    if (!selected) return; const decision = (document.querySelector<HTMLSelectElement>("#decision")!).value as Inspection["decision"]; const checks = [...document.querySelectorAll<HTMLInputElement>("[data-check]")].map((input) => input.checked); const observations = document.querySelector<HTMLTextAreaElement>("#observations")!.value.trim(); const now = new Date().toISOString(); inspections[selected.id] = { decision, checks, observations, inspector: currentUser ?? "usuario demo", updatedAt: now }; save();
+    const detail = details[selected.id] ?? { status: "registered", notes: "", evidence: [], events: [] }; detail.status = decision === "approved" ? "approved" : decision === "rejected" ? "rejected" : "inspection"; detail.events = Array.isArray(detail.events) ? detail.events : []; detail.events.push({ id: crypto.randomUUID(), label: `Inspección: ${decision === "approved" ? "aprobada" : decision === "rejected" ? "rechazada" : "con observaciones"}`, detail: `Revisada por ${currentUser ?? "usuario demo"}`, createdAt: now }); details[selected.id] = detail; localStorage.setItem("tracium-intervention-details-v1", JSON.stringify(details)); if (message) message.textContent = "Revisión guardada localmente."; render();
+  });
+  render();
+</script>
+
+<style>
+  :global(*){box-sizing:border-box}:global(body){min-width:320px;min-height:100vh;margin:0;color:#211b2e;background:#f6f5f8;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}:global(button),:global(input),:global(select),:global(textarea){font:inherit}.sidebar{position:fixed;inset:0 auto 0 0;display:flex;width:254px;flex-direction:column;padding:29px 17px 20px;border-right:1px solid #49365c;background:linear-gradient(180deg,#2e2d4f 0%,#23103e 58%,#351070 100%)}.brand{display:block;width:184px;margin:2px 0 49px 8px}.brand img{display:block;width:100%}.nav-heading,.eyebrow{color:#d1c5df;font-size:.68rem;font-weight:750;letter-spacing:.13em}.nav-heading{margin:0 11px 12px}nav{display:grid;gap:5px}.nav-item{display:flex;min-height:44px;align-items:center;gap:12px;padding:0 11px;border-radius:8px;color:#eee8f5;font-size:.87rem;font-weight:550;text-decoration:none}.nav-item.active{border-left:3px solid #b249f1;color:#fff;background:#b249f131;font-weight:700}.nav-icon{display:grid;width:21px;place-items:center;font-size:1.12rem}.sidebar-footer{display:flex;align-items:center;gap:9px;margin-top:auto;padding:15px 8px 2px;border-top:1px solid #ffffff2e;color:#ded5e8;font-size:.73rem}.status-dot{width:8px;height:8px;border-radius:50%;background:#05b179}.main-area{min-height:100vh;margin-left:254px}.topbar{display:flex;min-height:72px;align-items:center;justify-content:space-between;gap:16px;padding:0 clamp(22px,4vw,56px);border-bottom:1px solid #ece9f0;background:#ffffffdb}.breadcrumb{display:flex;gap:10px;color:#352e3f;font-size:.82rem;font-weight:650}.breadcrumb a,.top-link{color:#7902ff;text-decoration:none}.account{display:flex;align-items:center;gap:11px}.account-avatar{display:grid;width:34px;height:34px;place-items:center;border-radius:50%;color:#fff;background:linear-gradient(140deg,#b249f1,#7902ff);font-size:.82rem;font-weight:700}.account-email{color:#4c4457;font-size:.8rem}.top-link{font-size:.74rem;font-weight:700}.logout-button{padding:8px 11px;border:1px solid #e8e3ec;border-radius:7px;color:#62596d;background:#fff;cursor:pointer;font-size:.76rem;font-weight:600}.page-content{width:min(100%,1180px);margin:0 auto;padding:clamp(38px,6vh,62px) clamp(22px,4vw,56px)}.eyebrow{margin:0 0 10px;color:#7902ff}.page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:25px}h1,h2,p{margin-top:0}h1{margin-bottom:8px;color:#30263c;font-size:clamp(1.65rem,3vw,2.15rem);letter-spacing:-.035em}h2{margin-bottom:0;color:#30263c;font-size:1.04rem}.intro{margin:0;color:#827b8c;font-size:.88rem}.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}.summary-card{padding:17px 18px;border:1px solid #ece8f0;border-radius:9px;background:#fff}.summary-card strong,.summary-card span{display:block}.summary-card strong{color:#7902ff;font-size:1.45rem}.summary-card span{margin-top:3px;color:#827b8c;font-size:.74rem}.secondary-button,.primary-button{display:inline-flex;min-height:40px;align-items:center;justify-content:center;border-radius:7px;font-size:.78rem;font-weight:700;text-decoration:none;cursor:pointer}.secondary-button{padding:0 14px;border:1px solid #ded3ed;color:#60338f;background:#fff}.primary-button{width:100%;margin-top:15px;border:1px solid #7902ff;color:#fff;background:#7902ff}.page-message{min-height:20px;color:#08774f;font-size:.78rem}.inspection-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,.9fr);gap:18px;align-items:start}.panel{padding:22px;border:1px solid #ece8f0;border-radius:10px;background:#fff;box-shadow:0 3px 12px #23103e08}.panel-heading{display:flex;justify-content:space-between;gap:12px;margin-bottom:18px}.panel-heading .eyebrow{margin-bottom:7px}.panel-count{color:#958c9f;font-size:.72rem}.records-list{display:grid;gap:8px}.record-row{width:100%;display:block;padding:13px 14px;border:1px solid #eeeaf2;border-radius:8px;color:#40364b;background:#fff;text-align:left;cursor:pointer}.record-row:hover,.record-row.selected{border-color:#b249f1;background:#fcf8ff}.record-row strong,.record-row span{display:block}.record-row strong{font-size:.79rem}.record-row span{margin-top:5px;color:#8f8598;font-size:.7rem}.empty-state{padding:35px 10px;color:#958c9f;font-size:.8rem;text-align:center}.review-panel[hidden]{display:none}.selected-meta{margin:7px 0 19px;color:#827b8c;font-size:.76rem}.review-panel label:not(.check-item){display:block;margin:16px 0 7px;color:#51465d;font-size:.75rem;font-weight:700}.checklist{display:grid;gap:9px;padding-bottom:16px;border-bottom:1px solid #f0edf3}.check-item{display:flex;align-items:flex-start;gap:9px;color:#61576b;font-size:.76rem;line-height:1.35}.check-item input{accent-color:#7902ff;margin-top:2px}select,textarea{width:100%;padding:10px;border:1px solid #ded8e5;border-radius:7px;color:#40364b;background:#fff;font-size:.8rem}textarea{resize:vertical;line-height:1.5}@media(max-width:900px){.sidebar{position:static;width:auto;padding:17px 18px}.brand{width:155px;margin:0 0 18px}.nav-heading,.sidebar-footer{display:none}nav{grid-template-columns:repeat(4,1fr)}.nav-item{justify-content:center;min-height:38px;padding:0 7px;font-size:.75rem}.main-area{margin-left:0}}@media(max-width:700px){.topbar{align-items:flex-start;flex-direction:column;padding-top:15px;padding-bottom:15px}.account{width:100%}.account-email{flex:1}.page-heading{align-items:flex-start;flex-direction:column}.inspection-layout{grid-template-columns:1fr}.summary-row{grid-template-columns:1fr}}
+  .breadcrumb a { color: #898191; font-weight: 450; text-decoration: none; }
+  .breadcrumb a:hover { color: #7902ff; }
+</style>

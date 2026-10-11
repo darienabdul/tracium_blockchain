@@ -96,6 +96,8 @@ const logoPath = "/logos/logo-background-black-tracium.png";
             <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
           </form>
 
+          <a class="forgot-link" href="/forgot-password/">¿Olvidaste tu contraseña?</a>
+
           <p class="auth-note">Acceso de demostración para el blueprint.</p>
         </div>
         <p class="copyright">© {new Date().getFullYear()} Tracium</p>
@@ -132,7 +134,7 @@ const logoPath = "/logos/logo-background-black-tracium.png";
     { email: "demo2@tracium.pro", password: "User456!" },
   ];
 
-  if (sessionStorage.getItem("tracium-demo-user")) {
+  if (localStorage.getItem("tracium-demo-user")) {
     window.location.replace("/dashboard/");
   }
 
@@ -204,7 +206,7 @@ const logoPath = "/logos/logo-background-black-tracium.png";
       return;
     }
 
-    sessionStorage.setItem("tracium-demo-user", user.email);
+    localStorage.setItem("tracium-demo-user", user.email);
     window.location.assign("/dashboard/");
   });
 </script>
@@ -503,6 +505,16 @@ const logoPath = "/logos/logo-background-black-tracium.png";
 
   .form-status:not(:empty) {
     margin-top: 15px;
+  }
+
+  .forgot-link {
+    display: block;
+    margin-top: 17px;
+    color: #7902ff;
+    font-size: 0.8rem;
+    font-weight: 650;
+    text-align: center;
+    text-decoration: none;
   }
 
   .auth-note {

@@ -1,5 +1,6 @@
 ---
 const logoPath = "/logos/logo-background-black-tracium.png";
+import AccountMenu from "../components/AccountMenu.astro";
 ---
 
 <!doctype html>
@@ -31,14 +32,14 @@ const logoPath = "/logos/logo-background-black-tracium.png";
             <span class="nav-icon" aria-hidden="true">▤</span>
             Intervenciones
           </a>
-          <span class="nav-item disabled" aria-disabled="true">
+          <a class="nav-item" href="/inspections/">
             <span class="nav-icon" aria-hidden="true">✓</span>
             Inspecciones
-          </span>
-          <span class="nav-item disabled" aria-disabled="true">
+          </a>
+          <a class="nav-item" href="/audit/">
             <span class="nav-icon" aria-hidden="true">◷</span>
             Auditoría
-          </span>
+          </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -49,34 +50,59 @@ const logoPath = "/logos/logo-background-black-tracium.png";
 
       <main class="main-area">
         <header class="topbar">
-          <div class="breadcrumb"><span>Workspace</span><span aria-hidden="true">/</span>Dashboard</div>
-          <div class="account">
-            <span class="account-avatar" aria-hidden="true">T</span>
-            <span class="account-email" id="account-email">Cuenta demo</span>
-            <button class="logout-button" id="logout-button" type="button">Cerrar sesión</button>
-          </div>
+          <div class="breadcrumb"><a href="/dashboard/">Workspace</a><span aria-hidden="true">/</span>Dashboard</div>
+          <AccountMenu />
         </header>
 
         <section class="dashboard-content" aria-labelledby="dashboard-title">
           <p class="eyebrow">ESPACIO DE TRABAJO</p>
           <h1 id="dashboard-title">Dashboard</h1>
-          <p class="intro">Bienvenido a Tracium. Desde aquí podrás dar seguimiento a la operación.</p>
+          <p class="intro">Bienvenido a Tracium. Este es el resumen operativo de tu workspace.</p>
 
-          <div class="empty-state">
-            <div class="empty-icon" aria-hidden="true">
-              <svg viewBox="0 0 64 64" fill="none">
-                <rect x="8" y="8" width="48" height="48" rx="14" />
-                <path d="M20 25h24M20 32h17M20 39h12" />
-                <circle cx="44" cy="42" r="7" />
-                <path d="m49 47 4 4" />
-              </svg>
-            </div>
-            <h2>Tu espacio de trabajo está listo</h2>
-            <p>
-              Cuando el flujo operativo esté conectado, aquí encontrarás el resumen de tus
-              intervenciones, inspecciones y actividad reciente.
-            </p>
-            <span class="empty-badge"><span aria-hidden="true"></span> Sin actividad por ahora</span>
+          <div class="metric-grid" aria-label="Indicadores operativos">
+            <a class="metric-card" href="/interventions/">
+              <span class="metric-label">Intervenciones</span>
+              <strong id="metric-interventions">0</strong>
+              <small id="metric-interventions-detail">Registros creados</small>
+              <span class="metric-icon purple" aria-hidden="true">▤</span>
+            </a>
+            <a class="metric-card" href="/inspections/">
+              <span class="metric-label">Pendientes de inspección</span>
+              <strong id="metric-pending">0</strong>
+              <small>Requieren revisión</small>
+              <span class="metric-icon orange" aria-hidden="true">✓</span>
+            </a>
+            <a class="metric-card" href="/return-to-service/">
+              <span class="metric-label">Retornos aprobados</span>
+              <strong id="metric-approved">0</strong>
+              <small>Listos para liberar</small>
+              <span class="metric-icon green" aria-hidden="true">↗</span>
+            </a>
+            <a class="metric-card" href="/audit/">
+              <span class="metric-label">Evidencias</span>
+              <strong id="metric-evidence">0</strong>
+              <small>Archivos asociados</small>
+              <span class="metric-icon blue" aria-hidden="true">⌁</span>
+            </a>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="dashboard-panel" aria-labelledby="activity-title">
+              <div class="panel-heading">
+                <div><p class="eyebrow">SEGUIMIENTO</p><h2 id="activity-title">Actividad reciente</h2></div>
+                <a href="/audit/">Ver auditoría →</a>
+              </div>
+              <div class="activity-list" id="activity-list"></div>
+              <p class="activity-empty" id="activity-empty">Aún no hay actividad registrada.</p>
+            </section>
+
+            <aside class="dashboard-panel quick-panel" aria-labelledby="quick-title">
+              <p class="eyebrow">ACCESOS RÁPIDOS</p>
+              <h2 id="quick-title">Continúa tu trabajo</h2>
+              <a class="quick-link" href="/interventions/form/"><span>＋</span><strong>Nueva intervención</strong><small>Registra un trabajo realizado</small></a>
+              <a class="quick-link" href="/inspections/"><span>✓</span><strong>Revisar inspecciones</strong><small>Valida trabajos pendientes</small></a>
+              <a class="quick-link" href="/return-to-service/"><span>↗</span><strong>Retorno al servicio</strong><small>Confirma una liberación</small></a>
+            </aside>
           </div>
         </section>
       </main>
@@ -85,10 +111,34 @@ const logoPath = "/logos/logo-background-black-tracium.png";
 </html>
 
 <script>
+  type Intervention = {
+    id: string;
+    aircraft: string;
+    component: string;
+    workOrder: string;
+    createdAt: string;
+    createdBy: string;
+  };
+
+  type TimelineEvent = {
+    id: string;
+    label: string;
+    detail: string;
+    createdAt: string;
+  };
+
+  type DetailState = {
+    evidence?: unknown[];
+    events?: TimelineEvent[];
+  };
+
+  type Inspection = { decision: string; updatedAt: string; inspector: string };
+  type Approval = { decision: string; updatedAt: string; responsible: string };
+
   const sessionKey = "tracium-demo-user";
   const emailLabel = document.querySelector<HTMLSpanElement>("#account-email");
   const logoutButton = document.querySelector<HTMLButtonElement>("#logout-button");
-  const email = sessionStorage.getItem(sessionKey);
+  const email = localStorage.getItem(sessionKey);
 
   if (!email) {
     window.location.replace("/");
@@ -101,9 +151,104 @@ const logoPath = "/logos/logo-background-black-tracium.png";
   }
 
   logoutButton.addEventListener("click", () => {
-    sessionStorage.removeItem(sessionKey);
+    localStorage.removeItem(sessionKey);
     window.location.replace("/");
   });
+
+  function read<T>(key: string, fallback: T): T {
+    try {
+      return JSON.parse(localStorage.getItem(key) ?? JSON.stringify(fallback)) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function isIntervention(value: unknown): value is Intervention {
+    if (typeof value !== "object" || value === null) return false;
+    const record = value as Record<string, unknown>;
+    return ["id", "aircraft", "component", "workOrder", "createdAt", "createdBy"]
+      .every((key) => typeof record[key] === "string");
+  }
+
+  const interventions = read<unknown[]>("tracium-interventions-v1", []).filter(isIntervention);
+  const details = read<Record<string, DetailState>>("tracium-intervention-details-v1", {});
+  const inspections = read<Record<string, Inspection>>("tracium-inspections-v1", {});
+  const approvals = read<Record<string, Approval>>("tracium-approvals-v1", {});
+  const pendingInspections = interventions.filter((record) => !inspections[record.id]).length;
+  const approvedReturns = Object.values(approvals).filter((approval) => approval.decision === "approved").length;
+  const evidenceCount = interventions.reduce((total, record) => total + (details[record.id]?.evidence?.length ?? 0), 0);
+
+  const metricInterventions = document.querySelector<HTMLElement>("#metric-interventions");
+  const metricPending = document.querySelector<HTMLElement>("#metric-pending");
+  const metricApproved = document.querySelector<HTMLElement>("#metric-approved");
+  const metricEvidence = document.querySelector<HTMLElement>("#metric-evidence");
+  if (metricInterventions) metricInterventions.textContent = String(interventions.length);
+  if (metricPending) metricPending.textContent = String(pendingInspections);
+  if (metricApproved) metricApproved.textContent = String(approvedReturns);
+  if (metricEvidence) metricEvidence.textContent = String(evidenceCount);
+
+  function formatDate(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Fecha no disponible";
+    return new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  }
+
+  const activity: Array<TimelineEvent & { recordId: string }> = [];
+  for (const record of interventions) {
+    activity.push({
+      id: `created-${record.id}`,
+      recordId: record.id,
+      label: "Intervención registrada",
+      detail: `${record.aircraft} · ${record.workOrder}`,
+      createdAt: record.createdAt,
+    });
+    for (const event of details[record.id]?.events ?? []) {
+      activity.push({ ...event, recordId: record.id });
+    }
+    const inspection = inspections[record.id];
+    if (inspection) {
+      activity.push({
+        id: `inspection-${record.id}`,
+        recordId: record.id,
+        label: `Inspección ${inspection.decision}`,
+        detail: `Revisada por ${inspection.inspector}`,
+        createdAt: inspection.updatedAt,
+      });
+    }
+    const approval = approvals[record.id];
+    if (approval) {
+      activity.push({
+        id: `approval-${record.id}`,
+        recordId: record.id,
+        label: `Retorno al servicio ${approval.decision === "approved" ? "aprobado" : "rechazado"}`,
+        detail: `Decisión de ${approval.responsible}`,
+        createdAt: approval.updatedAt,
+      });
+    }
+  }
+
+  const activityList = document.querySelector<HTMLDivElement>("#activity-list");
+  const activityEmpty = document.querySelector<HTMLParagraphElement>("#activity-empty");
+  const recentActivity = activity.sort((first, second) => second.createdAt.localeCompare(first.createdAt)).slice(0, 6);
+  if (activityList) {
+    for (const event of recentActivity) {
+      const item = document.createElement("a");
+      item.className = "activity-item";
+      item.href = `/interventions/detail/?id=${encodeURIComponent(event.recordId)}`;
+      const marker = document.createElement("span");
+      marker.className = "activity-marker";
+      const content = document.createElement("span");
+      content.className = "activity-content";
+      const label = document.createElement("strong");
+      label.textContent = event.label;
+      const detail = document.createElement("small");
+      detail.textContent = `${event.detail} · ${formatDate(event.createdAt)}`;
+      content.append(label, detail);
+      item.append(marker, content);
+      activityList.append(item);
+    }
+  }
+  if (activityEmpty) activityEmpty.hidden = recentActivity.length > 0;
 </script>
 
 <style>
@@ -258,6 +403,16 @@ const logoPath = "/logos/logo-background-black-tracium.png";
     color: #c5becb;
   }
 
+  .breadcrumb a {
+    color: #898191;
+    font-weight: 450;
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: #7902ff;
+  }
+
   .account {
     display: flex;
     align-items: center;
@@ -291,6 +446,7 @@ const logoPath = "/logos/logo-background-black-tracium.png";
     cursor: pointer;
     font-size: 0.76rem;
     font-weight: 600;
+    text-decoration: none;
   }
 
   .logout-button:hover {
@@ -330,6 +486,156 @@ const logoPath = "/logos/logo-background-black-tracium.png";
     font-size: 0.94rem;
     line-height: 1.6;
   }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .metric-card {
+    position: relative;
+    min-height: 142px;
+    padding: 17px 16px;
+    overflow: hidden;
+    border: 1px solid #ece8f0;
+    border-radius: 10px;
+    color: inherit;
+    background: #fff;
+    text-decoration: none;
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  }
+
+  .metric-card:hover {
+    border-color: #d8c4ec;
+    box-shadow: 0 5px 16px rgb(35 16 62 / 7%);
+    transform: translateY(-2px);
+  }
+
+  .metric-label,
+  .metric-card strong,
+  .metric-card small {
+    display: block;
+  }
+
+  .metric-label {
+    max-width: 120px;
+    color: #766d80;
+    font-size: 0.72rem;
+    font-weight: 650;
+    line-height: 1.35;
+  }
+
+  .metric-card strong {
+    margin-top: 12px;
+    color: #30263c;
+    font-size: 1.8rem;
+    letter-spacing: -0.04em;
+  }
+
+  .metric-card small {
+    margin-top: 4px;
+    color: #a097a8;
+    font-size: 0.67rem;
+  }
+
+  .metric-icon {
+    position: absolute;
+    right: 14px;
+    top: 16px;
+    display: grid;
+    width: 31px;
+    height: 31px;
+    place-items: center;
+    border-radius: 9px;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .metric-icon.purple { color: #7902ff; background: #f0e6fb; }
+  .metric-icon.orange { color: #b56809; background: #fff4dc; }
+  .metric-icon.green { color: #08774f; background: #eaf8f1; }
+  .metric-icon.blue { color: #315da8; background: #edf3ff; }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
+    gap: 18px;
+  }
+
+  .dashboard-panel {
+    min-width: 0;
+    padding: 22px;
+    border: 1px solid #ece8f0;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .panel-heading .eyebrow { margin-bottom: 7px; }
+
+  .panel-heading h2,
+  .quick-panel h2 {
+    margin: 0;
+    color: #30263c;
+    font-size: 1.02rem;
+  }
+
+  .panel-heading a {
+    color: #7902ff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .activity-list { display: grid; }
+
+  .activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0edf3;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .activity-item:last-child { border-bottom: 0; }
+  .activity-item:hover strong { color: #7902ff; }
+
+  .activity-marker {
+    width: 9px;
+    height: 9px;
+    flex: 0 0 auto;
+    margin-top: 4px;
+    border: 2px solid #eadcf5;
+    border-radius: 50%;
+    background: #7902ff;
+  }
+
+  .activity-content { min-width: 0; }
+  .activity-content strong,
+  .activity-content small { display: block; }
+  .activity-content strong { color: #4a4054; font-size: 0.76rem; }
+  .activity-content small { margin-top: 4px; color: #958c9f; font-size: 0.69rem; overflow-wrap: anywhere; }
+  .activity-empty { margin: 20px 0 4px; color: #958c9f; font-size: 0.78rem; }
+  .activity-empty[hidden] { display: none; }
+
+  .quick-panel .eyebrow { margin-bottom: 7px; }
+  .quick-link { display: grid; grid-template-columns: 31px 1fr; column-gap: 10px; align-items: center; margin-top: 15px; color: inherit; text-decoration: none; }
+  .quick-link > span { grid-row: span 2; display: grid; width: 31px; height: 31px; place-items: center; border-radius: 8px; color: #7902ff; background: #f0e6fb; font-size: 1.1rem; }
+  .quick-link strong { color: #4a4054; font-size: 0.75rem; }
+  .quick-link small { margin-top: 3px; color: #958c9f; font-size: 0.67rem; }
+  .quick-link:hover strong { color: #7902ff; }
 
   .empty-state {
     display: flex;
@@ -465,6 +771,14 @@ const logoPath = "/logos/logo-background-black-tracium.png";
 
     .dashboard-content {
       padding: 38px 20px;
+    }
+
+    .metric-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-grid {
+      grid-template-columns: 1fr;
     }
 
     .empty-state {
