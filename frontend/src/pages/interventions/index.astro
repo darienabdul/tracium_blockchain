@@ -87,7 +87,22 @@ import AccountMenu from "../../components/AccountMenu.astro";
             </div>
 
             <p class="storage-message" id="storage-message" role="alert" hidden></p>
-            <div class="records-list" id="records-list"></div>
+            <div class="records-table-wrap" id="records-table-wrap">
+              <table class="records-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Aeronave / componente</th>
+                    <th scope="col">Part number</th>
+                    <th scope="col">Serial number</th>
+                    <th scope="col">Orden</th>
+                    <th scope="col">Fecha de trabajo</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col"><span class="visually-hidden">Acciones</span></th>
+                  </tr>
+                </thead>
+                <tbody id="records-list"></tbody>
+              </table>
+            </div>
             <div class="empty-state" id="empty-state" hidden>
               <div class="empty-icon" aria-hidden="true">
                 <svg viewBox="0 0 64 64" fill="none">
@@ -223,7 +238,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
   const storageKey = "tracium-interventions-v1";
   const emailLabel = requireElement<HTMLSpanElement>("#account-email");
   const logoutButton = requireElement<HTMLButtonElement>("#logout-button");
-  const listElement = requireElement<HTMLDivElement>("#records-list");
+  const listElement = requireElement<HTMLTableSectionElement>("#records-list");
+  const tableWrap = requireElement<HTMLDivElement>("#records-table-wrap");
   const recordCount = requireElement<HTMLParagraphElement>("#record-count");
   const storageMessage = requireElement<HTMLParagraphElement>("#storage-message");
   const listError = requireElement<HTMLParagraphElement>("#list-error");
@@ -359,55 +375,63 @@ import AccountMenu from "../../components/AccountMenu.astro";
       .sort((first, second) => second.createdAt.localeCompare(first.createdAt));
 
     listElement.replaceChildren();
+    tableWrap.hidden = filteredRecords.length === 0;
     recordCount.textContent = `${interventions.length} ${
       interventions.length === 1 ? "registro" : "registros"
     }`;
     listError.textContent = "";
 
     for (const record of filteredRecords) {
-      const card = document.createElement("a");
-      card.className = "intervention-card";
-      card.href = `/interventions/detail/?id=${encodeURIComponent(record.id)}`;
-      card.setAttribute("aria-label", `Ver detalle de la intervención ${record.id}`);
+      const row = document.createElement("tr");
+      row.className = "intervention-row";
 
-      const header = document.createElement("div");
-      header.className = "card-header";
-      const identity = document.createElement("div");
-      identity.className = "record-identity";
+      const identityCell = document.createElement("td");
+      identityCell.className = "identity-cell";
       const aircraft = document.createElement("h3");
       aircraft.textContent = record.aircraft;
       const component = document.createElement("p");
       component.className = "component-name";
-      component.textContent = `${record.component} · P/N ${record.partNumber || "—"} · S/N ${record.serialNumber || "—"}`;
-      identity.append(aircraft, component);
+      component.textContent = record.component;
+      identityCell.append(aircraft, component);
 
+      const partNumber = document.createElement("td");
+      partNumber.textContent = record.partNumber || "—";
+      const serialNumber = document.createElement("td");
+      serialNumber.textContent = record.serialNumber || "—";
+      const workOrderCell = document.createElement("td");
+      workOrderCell.className = "work-order";
+      workOrderCell.textContent = record.workOrder;
+      const dateCell = document.createElement("td");
+      dateCell.textContent = formatDate(record.performedAt);
+      const statusCell = document.createElement("td");
       const badge = document.createElement("span");
       badge.className = "record-status";
       badge.textContent = "Registrada";
-      header.append(identity, badge);
+      statusCell.append(badge);
 
-      const metadata = document.createElement("div");
-      metadata.className = "record-metadata";
-      const workOrder = document.createElement("span");
-      workOrder.className = "work-order";
-      workOrder.textContent = `Orden ${record.workOrder}`;
-      const date = document.createElement("span");
-      date.textContent = `Trabajo: ${formatDate(record.performedAt)}`;
-      metadata.append(workOrder, date);
+      const actionCell = document.createElement("td");
+      actionCell.className = "action-cell";
+      const viewLink = document.createElement("a");
+      viewLink.className = "view-button";
+      viewLink.href = `/interventions/detail/?id=${encodeURIComponent(record.id)}`;
+      viewLink.setAttribute("aria-label", `Ver detalle de la intervención ${record.id}`);
+      viewLink.title = "Ver detalle";
+      const viewIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      viewIcon.setAttribute("viewBox", "0 0 24 24");
+      viewIcon.setAttribute("fill", "none");
+      viewIcon.setAttribute("aria-hidden", "true");
+      const eyePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      eyePath.setAttribute("d", "M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z");
+      const eyeCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      eyeCircle.setAttribute("cx", "12");
+      eyeCircle.setAttribute("cy", "12");
+      eyeCircle.setAttribute("r", "2.7");
+      viewIcon.append(eyePath, eyeCircle);
+      viewLink.append(viewIcon);
+      actionCell.append(viewLink);
 
-      const description = document.createElement("p");
-      description.className = "work-description";
-      description.textContent = record.description;
-
-      const footer = document.createElement("div");
-      footer.className = "card-footer";
-      const reference = document.createElement("span");
-      reference.textContent = `ID ${record.id}`;
-      const author = document.createElement("span");
-      author.textContent = `Registrada por ${record.createdBy} · ${formatDate(record.createdAt)}`;
-      footer.append(reference, author);
-      card.append(header, metadata, description, footer);
-      listElement.append(card);
+      row.append(identityCell, partNumber, serialNumber, workOrderCell, dateCell, statusCell, actionCell);
+      listElement.append(row);
     }
 
     updateEmptyState(filteredRecords.length, query.length > 0);
@@ -838,9 +862,111 @@ import AccountMenu from "../../components/AccountMenu.astro";
     color: #a39cab;
   }
 
-  .records-list {
-    display: grid;
-    gap: 12px;
+  .records-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #ece8f0;
+    border-radius: 9px;
+  }
+
+  .records-table-wrap[hidden] {
+    display: none;
+  }
+
+  .records-table {
+    width: 100%;
+    min-width: 820px;
+    border-collapse: collapse;
+    background: #fff;
+  }
+
+  .records-table th {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e8e3ec;
+    color: #82798d;
+    background: #fbfafc;
+    font-size: 0.66rem;
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .records-table td {
+    padding: 13px 14px;
+    border-bottom: 1px solid #f0edf3;
+    color: #675d70;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .records-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .records-table tbody tr:hover {
+    background: #fcf9ff;
+  }
+
+  .records-table .identity-cell {
+    min-width: 175px;
+    white-space: normal;
+  }
+
+  .identity-cell h3 {
+    margin: 0;
+    color: #30263c;
+    font-size: 0.79rem;
+    font-weight: 700;
+  }
+
+  .identity-cell .component-name {
+    margin: 4px 0 0;
+    color: #797182;
+    font-size: 0.7rem;
+  }
+
+  .records-table .work-order {
+    color: #513478;
+    font-weight: 650;
+  }
+
+  .records-table .record-status {
+    display: inline-flex;
+  }
+
+  .action-cell {
+    width: 54px;
+    text-align: center;
+  }
+
+  .view-button {
+    display: inline-grid;
+    width: 31px;
+    height: 31px;
+    place-items: center;
+    border: 1px solid #ded3ed;
+    border-radius: 7px;
+    color: #7902ff;
+    background: #fff;
+    text-decoration: none;
+    transition: border-color 140ms ease, background 140ms ease;
+  }
+
+  .view-button:hover,
+  .view-button:focus-visible {
+    border-color: #b249f1;
+    background: #f7effd;
+    outline: 0;
+  }
+
+  .view-button svg {
+    width: 17px;
+    height: 17px;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
   }
 
   .intervention-card {
