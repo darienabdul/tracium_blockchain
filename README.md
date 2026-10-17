@@ -29,6 +29,8 @@ Los principales perfiles contemplados son técnicos de mantenimiento, inspectore
 ```text
 .
 ├── docs/                 # Documentación del proyecto por semana
+├── contracts/
+│   └── tracium-registry/  # Contrato Soroban y guía de despliegue en testnet
 ├── frontend/
 │   ├── assets/           # Activos públicos, logos y referencia de colores
 │   ├── src/
@@ -117,6 +119,7 @@ El MVP está orientado al siguiente proceso:
 - No se deben publicar en cadena archivos de evidencia ni datos operativos sensibles. El diseño contempla mantenerlos fuera de Stellar y utilizar referencias verificables cuando corresponda.
 - La interfaz debe distinguir entre un evento registrado en la aplicación y un evento cuya referencia haya sido verificada en Stellar.
 - Los datos y permisos deben ser validados por servicios confiables; ocultar controles en la interfaz no sustituye la autorización del backend.
+- El contrato Soroban inicial se encuentra en [contracts/tracium-registry](contracts/tracium-registry/README.md). Incluye roles, secuencia append-only, correcciones enlazadas y pasos para pruebas y despliegue en testnet. Su presencia en el repositorio no significa que esté desplegado.
 
 ## Documentación del producto
 
