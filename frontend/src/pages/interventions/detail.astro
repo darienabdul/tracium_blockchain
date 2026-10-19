@@ -158,8 +158,13 @@ import AccountMenu from "../../components/AccountMenu.astro";
               <section class="panel verification-panel" aria-labelledby="verification-title">
                 <p class="eyebrow">VERIFICACIÓN</p>
                 <h2 id="verification-title">Referencia verificable</h2>
-                <p class="panel-intro">La referencia de Stellar aparecerá cuando el flujo de integración esté conectado.</p>
-                <div class="verification-placeholder"><span aria-hidden="true">◷</span> Pendiente de integración</div>
+                <p class="panel-intro">El registro completo permanece local; Stellar conserva su hash y la secuencia verificable.</p>
+                <div class="verification-placeholder" id="verification-state"><span aria-hidden="true">◷</span> Wallet no conectada</div>
+                <p class="wallet-address" id="wallet-address"></p>
+                <div class="verification-actions">
+                  <button class="secondary-button" id="connect-wallet" type="button">Conectar Freighter</button>
+                  <button class="primary-button" id="anchor-intervention" type="button">Registrar en Stellar</button>
+                </div>
               </section>
             </aside>
           </div>
@@ -178,6 +183,8 @@ import AccountMenu from "../../components/AccountMenu.astro";
 </html>
 
 <script>
+  import { anchorEvent, connectWallet, getChainAnchor, storedWalletAddress } from "../../lib/soroban";
+
   type Intervention = {
     id: string;
     aircraft: string;
@@ -239,6 +246,10 @@ import AccountMenu from "../../components/AccountMenu.astro";
   const evidenceEmpty = document.querySelector<HTMLParagraphElement>("#evidence-empty");
   const evidenceCount = document.querySelector<HTMLSpanElement>("#evidence-count");
   const timeline = document.querySelector<HTMLDivElement>("#timeline");
+  const verificationState = document.querySelector<HTMLDivElement>("#verification-state");
+  const walletAddressLabel = document.querySelector<HTMLParagraphElement>("#wallet-address");
+  const connectWalletButton = document.querySelector<HTMLButtonElement>("#connect-wallet");
+  const anchorInterventionButton = document.querySelector<HTMLButtonElement>("#anchor-intervention");
 
   if (emailLabel && currentUser) {
     emailLabel.textContent = currentUser;
@@ -319,6 +330,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
     if (detailContent) detailContent.hidden = true;
     if (notFound) notFound.hidden = false;
   } else {
+    const currentRecord = record;
     const allDetails = readDetails();
     const details = allDetails[record.id] ?? defaultDetail(record);
     allDetails[record.id] = details;
@@ -409,6 +421,66 @@ import AccountMenu from "../../components/AccountMenu.astro";
       });
     }
 
+    function renderVerification(): void {
+      const initialEvent = details.events.find((event) => event.id === `event-${currentRecord.id}`) ?? details.events[0];
+      const anchor = initialEvent ? getChainAnchor(initialEvent.id) : undefined;
+      const wallet = storedWalletAddress();
+
+      if (walletAddressLabel) walletAddressLabel.textContent = wallet ? `Wallet: ${wallet}` : "";
+      if (connectWalletButton) connectWalletButton.textContent = wallet ? "Wallet conectada" : "Conectar Freighter";
+      if (anchorInterventionButton) anchorInterventionButton.disabled = anchor?.status === "confirmed";
+
+      if (!verificationState) return;
+      verificationState.className = `verification-placeholder verification-${anchor?.status ?? "idle"}`;
+      if (anchor?.status === "confirmed") {
+        verificationState.innerHTML = `<span aria-hidden="true">✓</span> Confirmado · secuencia ${anchor.sequence ?? "—"}`;
+        return;
+      }
+      if (anchor?.status === "failed") {
+        verificationState.innerHTML = `<span aria-hidden="true">!</span> Error: ${anchor.error ?? "No se pudo registrar"}`;
+        return;
+      }
+      if (anchor?.status === "pending") {
+        verificationState.innerHTML = `<span aria-hidden="true">◷</span> Transacción pendiente`;
+        return;
+      }
+      verificationState.innerHTML = `<span aria-hidden="true">◷</span> Pendiente de registro en Stellar`;
+    }
+
+    connectWalletButton?.addEventListener("click", async () => {
+      connectWalletButton.disabled = true;
+      try {
+        const address = await connectWallet();
+        if (pageMessage) pageMessage.textContent = `Wallet conectada: ${address}`;
+        renderVerification();
+      } catch (error) {
+        if (pageMessage) pageMessage.textContent = error instanceof Error ? error.message : "No se pudo conectar Freighter.";
+      } finally {
+        connectWalletButton.disabled = false;
+      }
+    });
+
+    anchorInterventionButton?.addEventListener("click", async () => {
+      const initialEvent = details.events.find((event) => event.id === `event-${currentRecord.id}`) ?? details.events[0];
+      if (!initialEvent) return;
+      anchorInterventionButton.disabled = true;
+      if (pageMessage) pageMessage.textContent = "Preparando y firmando la transacción en Freighter…";
+      renderVerification();
+      try {
+        const anchor = await anchorEvent({
+          interventionId: record.id,
+          eventId: initialEvent.id,
+          eventType: "Intervention",
+          payload: record,
+        });
+        if (pageMessage) pageMessage.textContent = `Intervención registrada en Stellar. Secuencia ${anchor.sequence ?? "—"}.`;
+      } catch (error) {
+        if (pageMessage) pageMessage.textContent = error instanceof Error ? error.message : "No se pudo registrar la intervención.";
+      } finally {
+        renderVerification();
+      }
+    });
+
     document.querySelector<HTMLButtonElement>("#save-status")?.addEventListener("click", () => {
       const nextStatus = statusInput?.value as Status;
       if (nextStatus === details.status) {
@@ -472,6 +544,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
     renderStatus();
     renderEvidence();
     renderTimeline();
+    renderVerification();
     saveDetails(allDetails);
   }
 </script>
@@ -580,6 +653,14 @@ import AccountMenu from "../../components/AccountMenu.astro";
   .timeline-item small { color: #a097a8; font-size: .66rem; }
   .verification-placeholder { display: flex; align-items: center; gap: 8px; padding: 11px; border: 1px solid #eee8f3; border-radius: 7px; color: #8f8598; background: #faf9fb; font-size: .72rem; }
   .verification-placeholder span { color: #b249f1; font-size: 1rem; }
+  .verification-confirmed { border-color: #bfe9d9; color: #08774f; background: #effaf5; }
+  .verification-confirmed span { color: #05b179; }
+  .verification-failed { border-color: #f0caca; color: #a23c3c; background: #fff5f5; }
+  .verification-failed span { color: #e05b5b; }
+  .wallet-address { margin: 9px 0 0; overflow: hidden; color: #958c9f; font-size: .62rem; text-overflow: ellipsis; white-space: nowrap; }
+  .verification-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .verification-actions button { width: 100%; margin-top: 0; padding: 0 8px; }
+  .verification-actions button:disabled { cursor: not-allowed; opacity: .6; }
   .not-found { width: min(100%, 600px); margin: 15vh auto; padding: 42px 25px; text-align: center; }
   .not-found[hidden], #detail-content[hidden] { display: none; }
   .not-found-icon { display: grid; width: 54px; height: 54px; place-items: center; margin: 0 auto 19px; border-radius: 16px; color: #7902ff; background: #f0e6fb; font-size: 1.5rem; font-weight: 800; }

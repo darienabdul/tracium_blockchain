@@ -36,7 +36,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
           <div class="page-heading"><div><h1 id="page-title">Revisión de inspección</h1><p class="intro">Valida la ejecución, la evidencia y el cumplimiento de cada intervención.</p></div><a class="secondary-button" href="/return-to-service/">Retorno al servicio →</a></div>
           <div class="summary-row"><div class="summary-card"><strong id="pending-count">0</strong><span>Pendientes de revisión</span></div><div class="summary-card"><strong id="approved-count">0</strong><span>Aprobadas</span></div><div class="summary-card"><strong id="observed-count">0</strong><span>Con observaciones</span></div></div>
           <p class="page-message" id="page-message" role="status" aria-live="polite"></p>
-          <div class="inspection-layout"><section class="panel"><div class="panel-heading"><div><p class="eyebrow">INTERVENCIONES</p><h2>Cola de inspección</h2></div><span class="panel-count" id="record-count">0 registros</span></div><div class="records-list" id="records-list"></div><p class="empty-state" id="empty-state" hidden>No hay intervenciones disponibles para inspección.</p></section><section class="panel review-panel" id="review-panel" hidden aria-labelledby="review-title"><p class="eyebrow">REVISIÓN SELECCIONADA</p><h2 id="review-title">Selecciona una intervención</h2><p class="selected-meta" id="selected-meta"></p><div class="checklist" id="checklist"></div><label for="decision">Resultado de inspección</label><select id="decision"><option value="approved">Aprobado</option><option value="observations">Aprobado con observaciones</option><option value="rejected">Rechazado</option></select><label for="observations">Observaciones</label><textarea id="observations" rows="5" maxlength="1200" placeholder="Registra hallazgos, referencias o acciones requeridas."></textarea><button class="primary-button" id="save-review" type="button">Guardar revisión</button></section></div>
+          <div class="inspection-layout"><section class="panel"><div class="panel-heading"><div><p class="eyebrow">INTERVENCIONES</p><h2>Cola de inspección</h2></div><span class="panel-count" id="record-count">0 registros</span></div><div class="records-list" id="records-list"></div><p class="empty-state" id="empty-state" hidden>No hay intervenciones disponibles para inspección.</p></section><section class="panel review-panel" id="review-panel" hidden aria-labelledby="review-title"><p class="eyebrow">REVISIÓN SELECCIONADA</p><h2 id="review-title">Selecciona una intervención</h2><p class="selected-meta" id="selected-meta"></p><div class="checklist" id="checklist"></div><label for="decision">Resultado de inspección</label><select id="decision"><option value="approved">Aprobado</option><option value="observations">Aprobado con observaciones</option><option value="rejected">Rechazado</option></select><label for="observations">Observaciones</label><textarea id="observations" rows="5" maxlength="1200" placeholder="Registra hallazgos, referencias o acciones requeridas."></textarea><button class="primary-button" id="save-review" type="button">Guardar revisión</button><button class="secondary-button chain-button" id="anchor-review" type="button">Registrar inspección en Stellar</button></section></div>
         </section>
       </main>
     </div>
@@ -44,8 +44,10 @@ import AccountMenu from "../../components/AccountMenu.astro";
 </html>
 
 <script>
+  import { anchorEvent, getChainAnchor } from "../../lib/soroban";
+
   type Intervention = { id: string; aircraft: string; component: string; serialNumber?: string; partNumber?: string; workOrder: string; performedAt: string; description: string; createdAt: string; createdBy: string };
-  type Inspection = { decision: "approved" | "observations" | "rejected"; checks: boolean[]; observations: string; inspector: string; updatedAt: string };
+  type Inspection = { decision: "approved" | "observations" | "rejected"; checks: boolean[]; observations: string; inspector: string; updatedAt: string; eventId?: string };
   type Details = { status?: string; notes?: string; evidence?: unknown[]; events?: Array<{ id: string; label: string; detail: string; createdAt: string }> };
   const sessionKey = "tracium-demo-user";
   const currentUser = localStorage.getItem(sessionKey);
@@ -61,6 +63,7 @@ import AccountMenu from "../../components/AccountMenu.astro";
   const panel = document.querySelector<HTMLElement>("#review-panel");
   const empty = document.querySelector<HTMLParagraphElement>("#empty-state");
   const message = document.querySelector<HTMLParagraphElement>("#page-message");
+  const anchorButton = document.querySelector<HTMLButtonElement>("#anchor-review");
   const selectedChecks = ["Trabajo ejecutado coincide con la orden", "Evidencia documental disponible", "Procedimiento técnico verificado", "Resultado registrado correctamente"];
   let selected: Intervention | undefined;
   const save = () => localStorage.setItem("tracium-inspections-v1", JSON.stringify(inspections));
@@ -82,12 +85,32 @@ import AccountMenu from "../../components/AccountMenu.astro";
     selected = record; if (!panel) return; panel.hidden = false; document.querySelector("#review-title")!.textContent = `${record.aircraft} · ${record.workOrder}`; document.querySelector("#selected-meta")!.textContent = `${record.component} · P/N ${record.partNumber || "—"} · S/N ${record.serialNumber || "—"} · Registrada por ${record.createdBy}`;
     const existing = inspections[record.id]; const checklist = document.querySelector<HTMLDivElement>("#checklist")!; checklist.replaceChildren();
     selectedChecks.forEach((label, index) => { const wrapper = document.createElement("label"); wrapper.className = "check-item"; const input = document.createElement("input"); input.type = "checkbox"; input.checked = existing?.checks[index] ?? false; input.dataset.check = String(index); const text = document.createElement("span"); text.textContent = label; wrapper.append(input, text); checklist.append(wrapper); });
-    (document.querySelector<HTMLSelectElement>("#decision")!).value = existing?.decision ?? "approved"; (document.querySelector<HTMLTextAreaElement>("#observations")!).value = existing?.observations ?? ""; render();
+    (document.querySelector<HTMLSelectElement>("#decision")!).value = existing?.decision ?? "approved"; (document.querySelector<HTMLTextAreaElement>("#observations")!).value = existing?.observations ?? "";
+    const anchor = existing?.eventId ? getChainAnchor(existing.eventId) : undefined;
+    if (anchorButton) {
+      anchorButton.disabled = anchor?.status === "confirmed";
+      anchorButton.textContent = anchor?.status === "confirmed" ? "Inspección confirmada" : "Registrar inspección en Stellar";
+    }
+    render();
   }
   list?.addEventListener("click", (event) => { const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-id]"); const record = records.find((item) => item.id === button?.dataset.id); if (record) openReview(record); });
   document.querySelector<HTMLButtonElement>("#save-review")?.addEventListener("click", () => {
-    if (!selected) return; const decision = (document.querySelector<HTMLSelectElement>("#decision")!).value as Inspection["decision"]; const checks = [...document.querySelectorAll<HTMLInputElement>("[data-check]")].map((input) => input.checked); const observations = document.querySelector<HTMLTextAreaElement>("#observations")!.value.trim(); const now = new Date().toISOString(); inspections[selected.id] = { decision, checks, observations, inspector: currentUser ?? "usuario demo", updatedAt: now }; save();
-    const detail = details[selected.id] ?? { status: "registered", notes: "", evidence: [], events: [] }; detail.status = decision === "approved" ? "approved" : decision === "rejected" ? "rejected" : "inspection"; detail.events = Array.isArray(detail.events) ? detail.events : []; detail.events.push({ id: crypto.randomUUID(), label: `Inspección: ${decision === "approved" ? "aprobada" : decision === "rejected" ? "rechazada" : "con observaciones"}`, detail: `Revisada por ${currentUser ?? "usuario demo"}`, createdAt: now }); details[selected.id] = detail; localStorage.setItem("tracium-intervention-details-v1", JSON.stringify(details)); if (message) message.textContent = "Revisión guardada localmente."; render();
+    if (!selected) return; const decision = (document.querySelector<HTMLSelectElement>("#decision")!).value as Inspection["decision"]; const checks = [...document.querySelectorAll<HTMLInputElement>("[data-check]")].map((input) => input.checked); const observations = document.querySelector<HTMLTextAreaElement>("#observations")!.value.trim(); const now = new Date().toISOString(); const eventId = inspections[selected.id]?.eventId ?? `inspection-${selected.id}`; inspections[selected.id] = { decision, checks, observations, inspector: currentUser ?? "usuario demo", updatedAt: now, eventId }; save();
+    const detail = details[selected.id] ?? { status: "registered", notes: "", evidence: [], events: [] }; detail.status = decision === "approved" ? "approved" : decision === "rejected" ? "rejected" : "inspection"; detail.events = Array.isArray(detail.events) ? detail.events : []; const event = { id: eventId, label: `Inspección: ${decision === "approved" ? "aprobada" : decision === "rejected" ? "rechazada" : "con observaciones"}`, detail: `Revisada por ${currentUser ?? "usuario demo"}`, createdAt: now }; const existingEventIndex = detail.events.findIndex((item) => item.id === eventId); if (existingEventIndex >= 0) detail.events[existingEventIndex] = event; else detail.events.push(event); details[selected.id] = detail; localStorage.setItem("tracium-intervention-details-v1", JSON.stringify(details)); if (message) message.textContent = "Revisión guardada localmente. Puedes registrarla en Stellar."; openReview(selected);
+  });
+  anchorButton?.addEventListener("click", async () => {
+    if (!selected) return;
+    const inspection = inspections[selected.id];
+    if (!inspection?.eventId) { if (message) message.textContent = "Guarda primero la revisión local."; return; }
+    anchorButton.disabled = true;
+    if (message) message.textContent = "Preparando y firmando la inspección en Freighter…";
+    try {
+      const anchor = await anchorEvent({ interventionId: selected.id, eventId: inspection.eventId, eventType: "Inspection", linkToLatest: true, expectedPreviousEventType: "Intervention", payload: { record: selected, inspection } });
+      if (message) message.textContent = `Inspección registrada en Stellar. Secuencia ${anchor.sequence ?? "—"}.`;
+    } catch (error) {
+      if (message) message.textContent = error instanceof Error ? error.message : "No se pudo registrar la inspección.";
+      anchorButton.disabled = false;
+    }
   });
   render();
 </script>
